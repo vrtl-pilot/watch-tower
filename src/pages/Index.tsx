@@ -1,10 +1,10 @@
-import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 
 const Index = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-background">
-      <Header />
+      <Navbar />
       <main className="flex-grow flex items-center justify-center">
         <div className="text-center px-4">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
