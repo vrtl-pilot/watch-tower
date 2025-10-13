@@ -12,6 +12,7 @@ import {
 import { Activity, AlertTriangle, CheckCircle, ArrowUpRight } from "lucide-react";
 import { WorkerQueueInfo } from "@/components/WorkerQueueInfo";
 import { RequestStages } from "@/components/RequestStages";
+import { EndpointBarChart } from "@/components/EndpointBarChart";
 
 const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
@@ -86,7 +87,7 @@ const Dashboard = () => {
             description="The most common error messages."
             data={topErrorsByDescriptionData}
           />
-          <EndpointTable
+          <EndpointBarChart
             title="🚀 Top Endpoints by Request Count"
             description="The most frequently accessed endpoints."
             data={topEndpointsByRequestData}
