@@ -10,6 +10,7 @@ import {
   YAxis,
   Legend,
 } from "recharts";
+import { TooltipProps } from "recharts";
 
 const chartData = [
   { name: "5:00 PM", total: 230, errors: 3, success: 227 },
@@ -21,23 +22,60 @@ const chartData = [
   { name: "5:30 PM", total: 450, errors: 15, success: 435 },
 ];
 
+type VisibilityState = {
+  total: boolean;
+  success: boolean;
+  errors: boolean;
+};
+
 export const RequestChart = () => {
-  const [opacity, setOpacity] = useState({
-    total: 1,
-    success: 1,
-    errors: 1,
+  const [visibility, setVisibility] = useState<VisibilityState>({
+    total: true,
+    success: true,
+    errors: true,
   });
 
   const handleLegendClick = (e: any) => {
     const { dataKey } = e;
-    setOpacity((prev) => ({
+    setVisibility((prev) => ({
       ...prev,
-      [dataKey]: prev[dataKey] === 1 ? 0 : 1,
+      [dataKey]: !prev[dataKey],
     }));
   };
 
+  const yMax = Math.ceil(
+    Math.max(
+      ...chartData.flatMap((d) => {
+        const values = [];
+        if (visibility.total) values.push(d.total);
+        if (visibility.success) values.push(d.success);
+        if (visibility.errors) values.push(d.errors);
+        if (values.length === 0) return [0];
+        return values;
+      })
+    ) * 1.1
+  );
+
+  const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="p-2 bg-background border border-border rounded-md shadow-lg">
+          <p className="label font-bold">{`${label}`}</p>
+          {payload.map((pld) =>
+            visibility[pld.dataKey as keyof VisibilityState] ? (
+              <p key={pld.dataKey} style={{ color: pld.color }}>
+                {`${pld.name}: ${pld.value}`}
+              </p>
+            ) : null
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Card className="col-span-1 md:col-span-4">
+    <Card className="col-span-1 md-col-span-4">
       <CardHeader>
         <CardTitle>Request Metrics Over Time</CardTitle>
       </CardHeader>
@@ -57,14 +95,10 @@ export const RequestChart = () => {
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `${value}`}
+              domain={[0, yMax > 5 ? yMax : 'auto']}
             />
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                border: "1px solid hsl(var(--border))",
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Legend onClick={handleLegendClick} />
             <Line
               type="monotone"
@@ -73,7 +107,7 @@ export const RequestChart = () => {
               strokeWidth={2}
               dot={false}
               name="Total Requests"
-              strokeOpacity={opacity.total}
+              hide={!visibility.total}
             />
             <Line
               type="monotone"
@@ -82,7 +116,7 @@ export const RequestChart = () => {
               strokeWidth={2}
               dot={false}
               name="Successful Requests"
-              strokeOpacity={opacity.success}
+              hide={!visibility.success}
             />
             <Line
               type="monotone"
@@ -91,7 +125,7 @@ export const RequestChart = () => {
               strokeWidth={2}
               dot={false}
               name="Errors"
-              strokeOpacity={opacity.errors}
+              hide={!visibility.errors}
             />
           </LineChart>
         </ResponsiveContainer>
