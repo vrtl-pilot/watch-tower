@@ -21,6 +21,14 @@ const topErrorsByDescriptionData = [
   { endpoint: "Internal Server Error: Null pointer exception", value: "150 errors" },
 ];
 
+const topEndpointsByRequestData = [
+  { endpoint: "/api/v1/users", value: "250,123 requests" },
+  { endpoint: "/api/v1/products", value: "180,456 requests" },
+  { endpoint: "/api/v1/orders", value: "120,789 requests" },
+  { endpoint: "/api/v1/auth/login", value: "95,321 requests" },
+  { endpoint: "/api/v1/search", value: "78,910 requests" },
+];
+
 const Dashboard = () => {
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -72,11 +80,18 @@ const Dashboard = () => {
       </div>
       <div className="grid grid-cols-1 gap-4">
         <RequestChart />
-        <EndpointTable
-          title="🚨 Top Errors by Description"
-          description="The most common error messages."
-          data={topErrorsByDescriptionData}
-        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <EndpointTable
+            title="🚨 Top Errors by Description"
+            description="The most common error messages."
+            data={topErrorsByDescriptionData}
+          />
+          <EndpointTable
+            title="🚀 Top Endpoints by Request Count"
+            description="The most frequently accessed endpoints."
+            data={topEndpointsByRequestData}
+          />
+        </div>
       </div>
     </div>
   );
