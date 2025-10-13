@@ -1,6 +1,5 @@
 import { StatCard } from "@/components/StatCard";
 import { RequestChart } from "@/components/RequestChart";
-import { EndpointTable } from "@/components/EndpointTable";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -82,7 +81,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 gap-4">
         <RequestChart />
         <div className="grid gap-4 md:grid-cols-2">
-          <EndpointTable
+          <EndpointBarChart
             title="🚨 Top Errors by Description"
             description="The most common error messages."
             data={topErrorsByDescriptionData}
