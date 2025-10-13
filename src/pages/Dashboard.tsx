@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Activity, AlertTriangle, CheckCircle, ArrowUpRight } from "lucide-react";
 import { WorkerQueueInfo } from "@/components/WorkerQueueInfo";
-import { RequestStages } from "@/components/RequestStages";
+import { RequestStagesChart } from "@/components/RequestStagesChart";
 import { EndpointBarChart } from "@/components/EndpointBarChart";
 
 const topErrorsByDescriptionData = [
@@ -76,7 +76,7 @@ const Dashboard = () => {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <WorkerQueueInfo />
-        <RequestStages />
+        <RequestStagesChart />
       </div>
       <div className="grid grid-cols-1 gap-4">
         <RequestChart />
