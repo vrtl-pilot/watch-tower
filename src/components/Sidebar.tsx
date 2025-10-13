@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { LayoutDashboard, BarChart2, Users, Settings, Component, ChevronLeft, TowerControl } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const menuItems = [
   {
@@ -45,18 +46,23 @@ const menuItems = [
   },
 ];
 
-const Sidebar = () => {
+interface SidebarProps {
+  className?: string;
+}
+
+const Sidebar = ({ className }: SidebarProps) => {
   const location = useLocation();
   const { isCollapsed, toggle } = useSidebar();
 
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-20" : "w-64"
+        "flex flex-col border-r transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-20" : "w-64",
+        className
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b h-16">
         {!isCollapsed && (
           <div className="flex items-center">
             <TowerControl className="h-8 w-8 mr-3 text-primary" />
@@ -71,20 +77,53 @@ const Sidebar = () => {
         <nav className="flex flex-col gap-1">
           {menuItems.map((item) =>
             item.subItems ? (
-              <Accordion key={item.label} type="single" collapsible defaultValue={item.subItems.some(sub => location.pathname.startsWith(sub.href)) ? "item-1" : undefined}>
-                <AccordionItem value="item-1" className="border-b-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <AccordionTrigger className="py-2 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 hover:no-underline justify-center">
-                        <div className="flex items-center gap-3">
-                          <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                          {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              isCollapsed ? (
+                <Tooltip key={item.label} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={item.subItems.some(sub => location.pathname.startsWith(sub.href)) ? "secondary" : "ghost"}
+                          className="w-full justify-center"
+                          size="icon"
+                        >
+                          <item.icon className="h-5 w-5" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="right" align="start" className="ml-2 p-1 w-48">
+                        <div className="flex flex-col gap-1">
+                          <p className="px-2 py-1.5 text-sm font-medium text-muted-foreground">{item.label}</p>
+                          {item.subItems.map((subItem) => (
+                            <Button
+                              key={subItem.label}
+                              asChild
+                              variant="ghost"
+                              className={cn(
+                                "justify-start gap-3",
+                                location.pathname === subItem.href && "bg-accent text-accent-foreground"
+                              )}
+                            >
+                              <Link to={subItem.href}>
+                                <subItem.icon className="h-4 w-4" />
+                                {subItem.label}
+                              </Link>
+                            </Button>
+                          ))}
                         </div>
-                      </AccordionTrigger>
-                    </TooltipTrigger>
-                    {isCollapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
-                  </Tooltip>
-                  {!isCollapsed && (
+                      </PopoverContent>
+                    </Popover>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{item.label}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Accordion key={item.label} type="single" collapsible defaultValue={item.subItems.some(sub => location.pathname.startsWith(sub.href)) ? "item-1" : undefined}>
+                  <AccordionItem value="item-1" className="border-b-0">
+                    <AccordionTrigger className="py-2 px-3 rounded-md hover:bg-muted hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                    </AccordionTrigger>
                     <AccordionContent className="pl-8 pt-1">
                       <div className="flex flex-col gap-1">
                         {item.subItems.map((subItem) => (
@@ -94,7 +133,7 @@ const Sidebar = () => {
                             variant="ghost"
                             className={cn(
                               "justify-start gap-3",
-                              location.pathname === subItem.href && "bg-gray-200 dark:bg-gray-700"
+                              location.pathname === subItem.href && "bg-primary/10 text-primary dark:bg-primary/20"
                             )}
                           >
                             <Link to={subItem.href}>
@@ -105,19 +144,18 @@ const Sidebar = () => {
                         ))}
                       </div>
                     </AccordionContent>
-                  )}
-                </AccordionItem>
-              </Accordion>
+                  </AccordionItem>
+                </Accordion>
+              )
             ) : (
-              <Tooltip>
+              <Tooltip key={item.label} delayDuration={0}>
                 <TooltipTrigger asChild>
                   <Button
-                    key={item.label}
                     asChild
                     variant="ghost"
                     className={cn(
                       "justify-start gap-3 px-3",
-                      location.pathname === item.href && "bg-gray-200 dark:bg-gray-700",
+                      location.pathname === item.href && "bg-primary/10 text-primary dark:bg-primary/20",
                       isCollapsed && "justify-center"
                     )}
                   >

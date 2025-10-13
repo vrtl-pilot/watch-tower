@@ -25,7 +25,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="p-4 border-b bg-white dark:bg-gray-800">
+    <header className="p-4 border-b bg-white dark:bg-gray-800 h-16">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="md:hidden">

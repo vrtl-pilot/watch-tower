@@ -5,7 +5,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 const Index = () => {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-background">
-      <Sidebar />
+      <Sidebar className="hidden md:flex" />
       <div className="flex flex-col flex-1">
         <Navbar />
         <main className="flex-grow p-6 overflow-auto">
