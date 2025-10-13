@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Line,
@@ -21,6 +22,20 @@ const chartData = [
 ];
 
 export const RequestChart = () => {
+  const [opacity, setOpacity] = useState({
+    total: 1,
+    success: 1,
+    errors: 1,
+  });
+
+  const handleLegendClick = (e: any) => {
+    const { dataKey } = e;
+    setOpacity((prev) => ({
+      ...prev,
+      [dataKey]: prev[dataKey] === 1 ? 0 : 1,
+    }));
+  };
+
   return (
     <Card className="col-span-1 md:col-span-4">
       <CardHeader>
@@ -50,7 +65,7 @@ export const RequestChart = () => {
                 border: "1px solid hsl(var(--border))",
               }}
             />
-            <Legend />
+            <Legend onClick={handleLegendClick} />
             <Line
               type="monotone"
               dataKey="total"
@@ -58,6 +73,7 @@ export const RequestChart = () => {
               strokeWidth={2}
               dot={false}
               name="Total Requests"
+              strokeOpacity={opacity.total}
             />
             <Line
               type="monotone"
@@ -66,6 +82,7 @@ export const RequestChart = () => {
               strokeWidth={2}
               dot={false}
               name="Successful Requests"
+              strokeOpacity={opacity.success}
             />
             <Line
               type="monotone"
@@ -74,6 +91,7 @@ export const RequestChart = () => {
               strokeWidth={2}
               dot={false}
               name="Errors"
+              strokeOpacity={opacity.errors}
             />
           </LineChart>
         </ResponsiveContainer>
