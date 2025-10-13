@@ -64,17 +64,13 @@ const Dashboard = () => {
           changeType="increase"
         />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-1 lg:col-span-4">
-          <RequestChart />
-        </div>
-        <div className="col-span-1 lg:col-span-3">
-          <EndpointTable
-            title="🚨 Top Errors by Description"
-            description="The most common error messages."
-            data={topErrorsByDescriptionData}
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-4">
+        <RequestChart />
+        <EndpointTable
+          title="🚨 Top Errors by Description"
+          description="The most common error messages."
+          data={topErrorsByDescriptionData}
+        />
       </div>
     </div>
   );
