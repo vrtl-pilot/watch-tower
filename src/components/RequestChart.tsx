@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts";
 import { TooltipProps } from "recharts";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const chartData = [
   { name: "5:00 PM", total: 230, errors: 3, success: 227 },
@@ -34,6 +35,7 @@ export const RequestChart = () => {
     success: true,
     errors: true,
   });
+  const [timeRange, setTimeRange] = useState("1H");
 
   const handleLegendClick = (e: any) => {
     const { dataKey } = e;
@@ -76,8 +78,30 @@ export const RequestChart = () => {
 
   return (
     <Card className="col-span-1 md-col-span-4">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Request Metrics Over Time</CardTitle>
+        <ToggleGroup
+          type="single"
+          defaultValue="1H"
+          value={timeRange}
+          onValueChange={(value) => {
+            if (value) setTimeRange(value);
+          }}
+          aria-label="Select time range"
+        >
+          <ToggleGroupItem value="1H" aria-label="1 Hour">
+            1H
+          </ToggleGroupItem>
+          <ToggleGroupItem value="24H" aria-label="24 Hours">
+            24H
+          </ToggleGroupItem>
+          <ToggleGroupItem value="7D" aria-label="7 Days">
+            7D
+          </ToggleGroupItem>
+          <ToggleGroupItem value="30D" aria-label="30 Days">
+            30D
+          </ToggleGroupItem>
+        </ToggleGroup>
       </CardHeader>
       <CardContent className="pl-2">
         <ResponsiveContainer width="100%" height={350}>
