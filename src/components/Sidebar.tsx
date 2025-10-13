@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 const menuItems = [
   {
     label: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
