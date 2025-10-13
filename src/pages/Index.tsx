@@ -8,7 +8,7 @@ const Index = () => {
       <Sidebar />
       <div className="flex flex-col flex-1">
         <Navbar />
-        <main className="flex-grow p-6">
+        <main className="flex-grow p-6 overflow-auto">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               Welcome to WatchTower

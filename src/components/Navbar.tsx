@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
-import { TowerControl } from 'lucide-react';
+import { TowerControl, Menu } from 'lucide-react';
+import { useSidebar } from '@/hooks/use-sidebar';
+import { Button } from './ui/button';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import Sidebar from './Sidebar';
+import { cn } from '@/lib/utils';
 
 const Navbar = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { isCollapsed } = useSidebar();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,11 +27,25 @@ const Navbar = () => {
   return (
     <header className="p-4 border-b bg-white dark:bg-gray-800">
       <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center">
-          <TowerControl className="h-8 w-8 mr-3 text-primary" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            WatchTower
-          </h1>
+        <div className="flex items-center gap-4">
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64">
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+          </div>
+          <div className={cn("hidden md:flex items-center", !isCollapsed && "md:hidden")}>
+            <TowerControl className="h-8 w-8 mr-3 text-primary" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              WatchTower
+            </h1>
+          </div>
         </div>
         <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
           {formatTime(currentTime)}
