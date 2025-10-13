@@ -11,18 +11,12 @@ import {
 } from "@/components/ui/select";
 import { Activity, AlertTriangle, CheckCircle, ArrowUpRight } from "lucide-react";
 
-const topErrorsData = [
-  { endpoint: "[POST] /api/v1/payment", value: "1,203 errors" },
-  { endpoint: "[GET] /api/v1/user/:id", value: "876 errors" },
-  { endpoint: "[PUT] /api/v1/inventory", value: "451 errors" },
-  { endpoint: "[GET] /api/v1/products", value: "230 errors" },
-];
-
-const slowestEndpointsData = [
-  { endpoint: "[GET] /api/v1/reports/generate", value: "1240ms" },
-  { endpoint: "[POST] /api/v1/orders", value: "850ms" },
-  { endpoint: "[GET] /api/v1/products/search", value: "780ms" },
-  { endpoint: "[PUT] /api/v1/user/profile", value: "650ms" },
+const topErrorsByDescriptionData = [
+  { endpoint: "Database connection timeout", value: "1,203 errors" },
+  { endpoint: "Invalid API Key provided", value: "876 errors" },
+  { endpoint: "User profile not found", value: "451 errors" },
+  { endpoint: "Payment processing failed", value: "230 errors" },
+  { endpoint: "Internal Server Error: Null pointer exception", value: "150 errors" },
 ];
 
 const Dashboard = () => {
@@ -74,16 +68,11 @@ const Dashboard = () => {
         <div className="col-span-1 lg:col-span-4">
           <RequestChart />
         </div>
-        <div className="col-span-1 lg:col-span-3 space-y-4">
+        <div className="col-span-1 lg:col-span-3">
           <EndpointTable
-            title="🔥 Top Endpoints by Errors"
-            description="The most frequently failing endpoints."
-            data={topErrorsData}
-          />
-          <EndpointTable
-            title="🐢 Slowest Endpoints"
-            description="Endpoints with the highest p99 latency."
-            data={slowestEndpointsData}
+            title="🚨 Top Errors by Description"
+            description="The most common error messages."
+            data={topErrorsByDescriptionData}
           />
         </div>
       </div>
