@@ -1,17 +1,23 @@
-// Update this page (the content is just a fallback if you fail to update the page)
-
+import Header from "@/components/Header";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">
-          Start building your amazing project here!
-        </p>
-      </div>
-      <MadeWithDyad />
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-background">
+      <Header />
+      <main className="flex-grow flex items-center justify-center">
+        <div className="text-center px-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Welcome to WatchTower
+          </h1>
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Your all-in-one solution for monitoring systems and applications with ease and precision.
+          </p>
+        </div>
+      </main>
+      <footer className="py-4">
+        <MadeWithDyad />
+      </footer>
     </div>
   );
 };
