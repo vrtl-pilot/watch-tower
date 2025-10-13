@@ -86,3 +86,4 @@ export const WorkerQueueInfo = () => {
       </CardContent>
     </Card>
   );
+};
