@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Activity, AlertTriangle, CheckCircle, ArrowUpRight } from "lucide-react";
+import { WorkerQueueInfo } from "@/components/WorkerQueueInfo";
+import { RequestStages } from "@/components/RequestStages";
 
 const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
@@ -63,6 +65,10 @@ const Dashboard = () => {
           change="+0.8%"
           changeType="increase"
         />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <WorkerQueueInfo />
+        <RequestStages />
       </div>
       <div className="grid grid-cols-1 gap-4">
         <RequestChart />
