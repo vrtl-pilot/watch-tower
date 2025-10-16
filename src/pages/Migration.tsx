@@ -243,9 +243,7 @@ const Migration = () => {
                           </div>
                           <div>
                             <Label className="text-xs text-muted-foreground">Environment</Label>
-                            <p className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
-                              {item.env}
-                            </p>
+                            <p>{item.env}</p>
                           </div>
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
