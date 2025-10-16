@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +58,13 @@ const Migration = () => {
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [enqueuedIds, setEnqueuedIds] = useState<number[]>([]);
 
+  const handleSetStartDate = (date: Date | undefined) => {
+    setStartDate(date);
+    if (date && endDate && date > endDate) {
+      setEndDate(date);
+    }
+  };
+
   const handleAddMigration = () => {
     if (!newFundName) return;
 
@@ -65,6 +72,10 @@ const Migration = () => {
     if (dateType === "oneDay" && newDate) {
       dateInfo.date = newDate;
     } else if (dateType === "range" && startDate && endDate) {
+      if (startDate > endDate) {
+        showError("End date cannot be before start date.");
+        return;
+      }
       dateInfo.startDate = startDate;
       dateInfo.endDate = endDate;
     } else if (dateType !== "historical") {
@@ -243,11 +254,11 @@ const Migration = () => {
               <>
                 <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
                   <Label htmlFor="startDate">Start Date</Label>
-                  <DatePicker date={startDate} setDate={setStartDate} />
+                  <DatePicker date={startDate} setDate={handleSetStartDate} />
                 </div>
                 <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
                   <Label htmlFor="endDate">End Date</Label>
-                  <DatePicker date={endDate} setDate={setEndDate} />
+                  <DatePicker date={endDate} setDate={setEndDate} disabled={startDate ? { before: startDate } : undefined} />
                 </div>
               </>
             )}
