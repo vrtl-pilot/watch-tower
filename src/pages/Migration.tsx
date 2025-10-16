@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { showSuccess } from "@/utils/toast";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
+import { cn } from "@/lib/utils";
 
 interface MigrationItem {
   id: number;
@@ -48,6 +49,7 @@ const Migration = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date; env: string }>({ fundName: "", env: "" });
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
+  const [enqueuedIds, setEnqueuedIds] = useState<number[]>([]);
 
   const handleAddMigration = () => {
     if (newFundName && newDate) {
@@ -92,8 +94,9 @@ const Migration = () => {
   };
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    const unEnqueuedIds = migrations.filter(item => !enqueuedIds.includes(item.id)).map(item => item.id);
     if (checked === true) {
-      setSelectedItems(migrations.map((item) => item.id));
+      setSelectedItems(unEnqueuedIds);
     } else {
       setSelectedItems([]);
     }
@@ -122,12 +125,17 @@ const Migration = () => {
   };
 
   const handleEnqueue = () => {
-    showSuccess(`${migrations.length} migration(s) have been enqueued.`);
+    const newItemsToEnqueue = migrations.filter(item => !enqueuedIds.includes(item.id));
+    if (newItemsToEnqueue.length > 0) {
+      setEnqueuedIds(prev => [...prev, ...newItemsToEnqueue.map(item => item.id)]);
+      showSuccess(`${newItemsToEnqueue.length} new migration(s) have been enqueued.`);
+    }
   };
 
   const handleConfirmCancel = () => {
     setMigrations([]);
     setSelectedItems([]);
+    setEnqueuedIds([]);
     setIsCancelDialogOpen(false);
     showSuccess("Migration queue has been cleared.");
   };
@@ -136,6 +144,9 @@ const Migration = () => {
     setNewFundName(fundName);
     setIsFundSearchOpen(false);
   };
+
+  const unEnqueuedItems = migrations.filter(item => !enqueuedIds.includes(item.id));
+  const unEnqueuedSelectedItems = selectedItems.filter(id => unEnqueuedItems.some(item => item.id === id));
 
   return (
     <>
@@ -195,9 +206,9 @@ const Migration = () => {
                 <Checkbox
                   id="selectAll"
                   checked={
-                    migrations.length > 0 && selectedItems.length === migrations.length
+                    unEnqueuedItems.length > 0 && unEnqueuedSelectedItems.length === unEnqueuedItems.length
                       ? true
-                      : selectedItems.length > 0
+                      : unEnqueuedSelectedItems.length > 0
                       ? 'indeterminate'
                       : false
                   }
@@ -223,84 +234,90 @@ const Migration = () => {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleEnqueue} disabled={migrations.length === 0}>
+                <Button onClick={handleEnqueue} disabled={unEnqueuedItems.length === 0}>
                   Enqueue
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {migrations.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-start gap-4 p-2 border rounded-md"
-                  >
-                    <Checkbox
-                      className="mt-1"
-                      checked={selectedItems.includes(item.id)}
-                      onCheckedChange={() => handleSelect(item.id)}
-                      aria-label={`Select migration for ${item.fundName}`}
-                      disabled={editingId !== null}
-                    />
-                    {editingId === item.id ? (
-                      <>
-                        <div className="flex-1 flex flex-wrap items-center gap-4">
-                          <Input
-                            className="w-auto flex-grow"
-                            value={editFormData.fundName}
-                            onChange={(e) => setEditFormData({ ...editFormData, fundName: e.target.value })}
-                          />
-                          <DatePicker
-                            date={editFormData.date}
-                            setDate={(date) => setEditFormData({ ...editFormData, date })}
-                          />
-                          <Select
-                            value={editFormData.env}
-                            onValueChange={(value) => setEditFormData({ ...editFormData, env: value })}
-                          >
-                            <SelectTrigger className="w-auto flex-grow">
-                              <SelectValue placeholder="Environment" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="prod">Production</SelectItem>
-                              <SelectItem value="staging">Staging</SelectItem>
-                              <SelectItem value="dev">Development</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button variant="outline" size="icon" onClick={() => handleSaveEdit(item.id)}>
-                          <Check className="h-4 w-4 text-green-500" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
-                          <Ban className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Fund name</Label>
-                            <p>{item.fundName}</p>
+                {migrations.map((item) => {
+                  const isEnqueued = enqueuedIds.includes(item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "flex items-start gap-4 p-2 border rounded-md",
+                        isEnqueued && "bg-muted/50 opacity-60"
+                      )}
+                    >
+                      <Checkbox
+                        className="mt-1"
+                        checked={selectedItems.includes(item.id)}
+                        onCheckedChange={() => handleSelect(item.id)}
+                        aria-label={`Select migration for ${item.fundName}`}
+                        disabled={editingId !== null || isEnqueued}
+                      />
+                      {editingId === item.id ? (
+                        <>
+                          <div className="flex-1 flex flex-wrap items-center gap-4">
+                            <Input
+                              className="w-auto flex-grow"
+                              value={editFormData.fundName}
+                              onChange={(e) => setEditFormData({ ...editFormData, fundName: e.target.value })}
+                            />
+                            <DatePicker
+                              date={editFormData.date}
+                              setDate={(date) => setEditFormData({ ...editFormData, date })}
+                            />
+                            <Select
+                              value={editFormData.env}
+                              onValueChange={(value) => setEditFormData({ ...editFormData, env: value })}
+                            >
+                              <SelectTrigger className="w-auto flex-grow">
+                                <SelectValue placeholder="Environment" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="prod">Production</SelectItem>
+                                <SelectItem value="staging">Staging</SelectItem>
+                                <SelectItem value="dev">Development</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Date</Label>
-                            <p>{item.date.toLocaleDateString()}</p>
+                          <Button variant="outline" size="icon" onClick={() => handleSaveEdit(item.id)}>
+                            <Check className="h-4 w-4 text-green-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
+                            <Ban className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Fund name</Label>
+                              <p>{item.fundName}</p>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Date</Label>
+                              <p>{item.date.toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Environment</Label>
+                              <p>{item.env}</p>
+                            </div>
                           </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Environment</Label>
-                            <p>{item.env}</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openConfirmationDialog(item.id)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ))}
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} disabled={isEnqueued}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => openConfirmationDialog(item.id)} disabled={isEnqueued}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
