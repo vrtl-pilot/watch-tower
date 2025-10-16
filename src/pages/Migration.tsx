@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { showSuccess } from "@/utils/toast";
 
 interface MigrationItem {
   id: number;
@@ -63,20 +64,34 @@ const Migration = () => {
   };
 
   const handleConfirmDelete = () => {
+    let deletedCount = 0;
     if (itemToDelete === "bulk") {
+      deletedCount = selectedItems.length;
       setMigrations(migrations.filter((item) => !selectedItems.includes(item.id)));
       setSelectedItems([]);
     } else if (itemToDelete !== null) {
+      deletedCount = 1;
       setMigrations(migrations.filter((item) => item.id !== itemToDelete));
     }
     setIsDialogOpen(false);
     setItemToDelete(null);
+    if (deletedCount > 0) {
+      showSuccess(`Successfully deleted ${deletedCount} migration(s).`);
+    }
   };
 
   const handleSelect = (id: number) => {
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedItems(migrations.map((item) => item.id));
+    } else {
+      setSelectedItems([]);
+    }
   };
 
   return (
@@ -120,7 +135,21 @@ const Migration = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Migration Queue</CardTitle>
+              <div className="flex items-center gap-4">
+                <Checkbox
+                  id="selectAll"
+                  checked={
+                    migrations.length > 0 && selectedItems.length === migrations.length
+                      ? true
+                      : selectedItems.length > 0
+                      ? 'indeterminate'
+                      : false
+                  }
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all migrations"
+                />
+                <CardTitle>Migration Queue</CardTitle>
+              </div>
               {selectedItems.length > 0 && (
                 <Button
                   variant="destructive"
