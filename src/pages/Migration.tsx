@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Pencil, Check, Ban } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -43,6 +43,8 @@ const Migration = () => {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date }>({ fundName: "" });
 
   const handleAddMigration = () => {
     if (newFundName && newDate) {
@@ -92,6 +94,28 @@ const Migration = () => {
     } else {
       setSelectedItems([]);
     }
+  };
+
+  const handleEdit = (item: MigrationItem) => {
+    setEditingId(item.id);
+    setEditFormData({ fundName: item.fundName, date: item.date });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const handleSaveEdit = (id: number) => {
+    if (!editFormData.fundName || !editFormData.date) return;
+    setMigrations(
+      migrations.map((item) =>
+        item.id === id
+          ? { ...item, fundName: editFormData.fundName, date: editFormData.date! }
+          : item
+      )
+    );
+    setEditingId(null);
+    showSuccess("Migration item updated successfully.");
   };
 
   return (
@@ -171,36 +195,56 @@ const Migration = () => {
                       checked={selectedItems.includes(item.id)}
                       onCheckedChange={() => handleSelect(item.id)}
                       aria-label={`Select migration for ${item.fundName}`}
+                      disabled={editingId !== null}
                     />
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">
-                          Fund name
-                        </Label>
-                        <p>{item.fundName}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">
-                          Date
-                        </Label>
-                        <p>{item.date.toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">
-                          Environment
-                        </Label>
-                        <p className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                          {item.env}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openConfirmationDialog(item.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    {editingId === item.id ? (
+                      <>
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                          <Input
+                            value={editFormData.fundName}
+                            onChange={(e) => setEditFormData({ ...editFormData, fundName: e.target.value })}
+                          />
+                          <DatePicker
+                            date={editFormData.date}
+                            setDate={(date) => setEditFormData({ ...editFormData, date })}
+                          />
+                          <p className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+                            {item.env}
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleSaveEdit(item.id)}>
+                          <Check className="h-4 w-4 text-green-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
+                          <Ban className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Fund name</Label>
+                            <p>{item.fundName}</p>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Date</Label>
+                            <p>{item.date.toLocaleDateString()}</p>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Environment</Label>
+                            <p className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+                              {item.env}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openConfirmationDialog(item.id)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
