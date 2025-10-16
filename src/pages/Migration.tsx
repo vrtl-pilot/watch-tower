@@ -199,8 +199,9 @@ const Migration = () => {
                     />
                     {editingId === item.id ? (
                       <>
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div className="flex-1 flex flex-wrap items-center gap-4">
                           <Input
+                            className="w-auto flex-grow"
                             value={editFormData.fundName}
                             onChange={(e) => setEditFormData({ ...editFormData, fundName: e.target.value })}
                           />
@@ -208,15 +209,13 @@ const Migration = () => {
                             date={editFormData.date}
                             setDate={(date) => setEditFormData({ ...editFormData, date })}
                           />
-                          <p className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
-                            {item.env}
-                          </p>
+                          <p className="text-sm text-muted-foreground uppercase">{item.env}</p>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleSaveEdit(item.id)}>
+                        <Button variant="outline" size="icon" onClick={() => handleSaveEdit(item.id)}>
                           <Check className="h-4 w-4 text-green-500" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
-                          <Ban className="h-4 w-4 text-red-500" />
+                          <Ban className="h-4 w-4 text-destructive" />
                         </Button>
                       </>
                     ) : (
