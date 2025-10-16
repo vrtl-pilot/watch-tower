@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { showSuccess } from "@/utils/toast";
 import { EligibilityDisplay } from "@/components/EligibilityDisplay";
@@ -61,6 +61,12 @@ const FundEligibility = () => {
     showSuccess(`Eligibility check completed for ${selectedFundName}. Status: ${status}`);
   };
 
+  const handleClear = () => {
+    setSelectedFundName("");
+    setEligibilityResult(null);
+    showSuccess("Selection cleared.");
+  };
+
   return (
     <>
       <div className="p-8 pt-6 space-y-6">
@@ -106,7 +112,12 @@ const FundEligibility = () => {
                 </Button>
               </div>
             </div>
-            <Button onClick={handleCheckEligibility} disabled={!selectedFundName}>Check Eligibility</Button>
+            <div className="flex gap-2">
+              <Button onClick={handleCheckEligibility} disabled={!selectedFundName}>Check Eligibility</Button>
+              <Button variant="outline" onClick={handleClear} disabled={!selectedFundName && !eligibilityResult}>
+                <X className="h-4 w-4 mr-2" /> Clear
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
