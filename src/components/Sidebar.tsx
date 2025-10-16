@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, BarChart2, Users, Settings, Component, ChevronLeft, TowerControl, DatabaseZap } from "lucide-react";
+import { LayoutDashboard, BarChart2, Users, Settings, Component, ChevronLeft, TowerControl, DatabaseZap, ShieldCheck } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -43,6 +43,11 @@ const menuItems = [
     label: "Migration",
     href: "/migration",
     icon: DatabaseZap,
+  },
+  {
+    label: "Fund Eligibility",
+    href: "/fund-eligibility",
+    icon: ShieldCheck,
   },
   {
     label: "Settings",
