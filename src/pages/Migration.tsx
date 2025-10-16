@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -186,15 +186,27 @@ const Migration = () => {
                 />
                 <CardTitle>Migration Queue</CardTitle>
               </div>
-              {selectedItems.length > 0 && (
+              <div className="flex items-center gap-2">
+                {selectedItems.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => openConfirmationDialog("bulk")}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Selected ({selectedItems.length})
+                  </Button>
+                )}
                 <Button
-                  variant="destructive"
-                  onClick={() => openConfirmationDialog("bulk")}
+                  variant="outline"
+                  onClick={() => setIsCancelDialogOpen(true)}
+                  disabled={migrations.length === 0}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Selected ({selectedItems.length})
+                  Cancel
                 </Button>
-              )}
+                <Button onClick={handleEnqueue} disabled={migrations.length === 0}>
+                  Enqueue
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -271,18 +283,6 @@ const Migration = () => {
                 ))}
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsCancelDialogOpen(true)}
-                disabled={migrations.length === 0}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleEnqueue} disabled={migrations.length === 0}>
-                Enqueue
-              </Button>
-            </CardFooter>
           </Card>
 
           <Card>
