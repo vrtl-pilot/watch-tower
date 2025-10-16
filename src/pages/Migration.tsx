@@ -189,9 +189,10 @@ const Migration = () => {
                 {migrations.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-4 p-2 border rounded-md"
+                    className="flex items-start gap-4 p-2 border rounded-md"
                   >
                     <Checkbox
+                      className="mt-1"
                       checked={selectedItems.includes(item.id)}
                       onCheckedChange={() => handleSelect(item.id)}
                       aria-label={`Select migration for ${item.fundName}`}
