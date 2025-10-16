@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,7 +41,8 @@ const Migration = () => {
   const [newFundName, setNewFundName] = useState("");
   const [newDate, setNewDate] = useState<Date | undefined>(new Date());
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date; env: string }>({ fundName: "", env: "" });
@@ -62,7 +63,7 @@ const Migration = () => {
 
   const openConfirmationDialog = (id: number | "bulk") => {
     setItemToDelete(id);
-    setIsDialogOpen(true);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = () => {
@@ -75,7 +76,7 @@ const Migration = () => {
       deletedCount = 1;
       setMigrations(migrations.filter((item) => item.id !== itemToDelete));
     }
-    setIsDialogOpen(false);
+    setIsDeleteDialogOpen(false);
     setItemToDelete(null);
     if (deletedCount > 0) {
       showSuccess(`Successfully deleted ${deletedCount} migration(s).`);
@@ -116,6 +117,17 @@ const Migration = () => {
     );
     setEditingId(null);
     showSuccess("Migration item updated successfully.");
+  };
+
+  const handleEnqueue = () => {
+    showSuccess(`${migrations.length} migration(s) have been enqueued.`);
+  };
+
+  const handleConfirmCancel = () => {
+    setMigrations([]);
+    setSelectedItems([]);
+    setIsCancelDialogOpen(false);
+    showSuccess("Migration queue has been cleared.");
   };
 
   return (
@@ -259,6 +271,18 @@ const Migration = () => {
                 ))}
               </div>
             </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsCancelDialogOpen(true)}
+                disabled={migrations.length === 0}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleEnqueue} disabled={migrations.length === 0}>
+                Enqueue
+              </Button>
+            </CardFooter>
           </Card>
 
           <Card>
@@ -287,7 +311,7 @@ const Migration = () => {
           </Card>
         </div>
       </div>
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -300,6 +324,26 @@ const Migration = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete}>
               Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear the entire migration queue. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, clear queue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
