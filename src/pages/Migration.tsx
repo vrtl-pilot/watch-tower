@@ -31,38 +31,57 @@ import { cn } from "@/lib/utils";
 interface MigrationItem {
   id: number;
   fundName: string;
-  date: Date;
+  dateType: "historical" | "oneDay" | "range";
+  date?: Date;
+  startDate?: Date;
+  endDate?: Date;
   env: string;
 }
 
 const Migration = () => {
   const [migrations, setMigrations] = useState<MigrationItem[]>([
-    { id: 1, fundName: "Sample Fund A", date: new Date(), env: "prod" },
-    { id: 2, fundName: "Sample Fund B", date: new Date(), env: "prod" },
+    { id: 1, fundName: "Sample Fund A", dateType: "oneDay", date: new Date(), env: "prod" },
+    { id: 2, fundName: "Sample Fund B", dateType: "range", startDate: new Date(), endDate: new Date(new Date().setDate(new Date().getDate() + 7)), env: "prod" },
   ]);
   const [newFundName, setNewFundName] = useState("");
+  const [dateType, setDateType] = useState<"historical" | "oneDay" | "range">("oneDay");
   const [newDate, setNewDate] = useState<Date | undefined>(new Date());
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date; env: string }>({ fundName: "", env: "" });
+  const [editFormData, setEditFormData] = useState<Partial<MigrationItem>>({});
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [enqueuedIds, setEnqueuedIds] = useState<number[]>([]);
 
   const handleAddMigration = () => {
-    if (newFundName && newDate) {
-      const newItem: MigrationItem = {
-        id: Date.now(),
-        fundName: newFundName,
-        date: newDate,
-        env: "prod",
-      };
-      setMigrations([...migrations, newItem]);
-      setNewFundName("");
-      setNewDate(new Date());
+    if (!newFundName) return;
+
+    let dateInfo: Partial<MigrationItem> = { dateType };
+    if (dateType === "oneDay" && newDate) {
+      dateInfo.date = newDate;
+    } else if (dateType === "range" && startDate && endDate) {
+      dateInfo.startDate = startDate;
+      dateInfo.endDate = endDate;
+    } else if (dateType !== "historical") {
+      return; // Invalid date state
     }
+
+    const newItem: MigrationItem = {
+      id: Date.now(),
+      fundName: newFundName,
+      env: "prod",
+      ...dateInfo,
+    } as MigrationItem;
+
+    setMigrations([...migrations, newItem]);
+    setNewFundName("");
+    setDateType("oneDay");
+    setNewDate(new Date());
   };
 
   const openConfirmationDialog = (id: number | "bulk") => {
@@ -104,7 +123,7 @@ const Migration = () => {
 
   const handleEdit = (item: MigrationItem) => {
     setEditingId(item.id);
-    setEditFormData({ fundName: item.fundName, date: item.date, env: item.env });
+    setEditFormData({ ...item });
   };
 
   const handleCancelEdit = () => {
@@ -112,12 +131,9 @@ const Migration = () => {
   };
 
   const handleSaveEdit = (id: number) => {
-    if (!editFormData.fundName || !editFormData.date) return;
     setMigrations(
       migrations.map((item) =>
-        item.id === id
-          ? { ...item, fundName: editFormData.fundName, date: editFormData.date!, env: editFormData.env }
-          : item
+        item.id === id ? { ...item, ...editFormData } as MigrationItem : item
       )
     );
     setEditingId(null);
@@ -147,6 +163,19 @@ const Migration = () => {
 
   const unEnqueuedItems = migrations.filter(item => !enqueuedIds.includes(item.id));
   const unEnqueuedSelectedItems = selectedItems.filter(id => unEnqueuedItems.some(item => item.id === id));
+
+  const renderDateDisplay = (item: MigrationItem) => {
+    switch (item.dateType) {
+      case "historical":
+        return "Historical";
+      case "oneDay":
+        return item.date ? item.date.toLocaleDateString() : "N/A";
+      case "range":
+        return `${item.startDate ? item.startDate.toLocaleDateString() : "N/A"} - ${item.endDate ? item.endDate.toLocaleDateString() : "N/A"}`;
+      default:
+        return "N/A";
+    }
+  };
 
   return (
     <>
@@ -191,10 +220,37 @@ const Migration = () => {
                 </Button>
               </div>
             </div>
-            <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
-              <Label htmlFor="date">Date</Label>
-              <DatePicker date={newDate} setDate={setNewDate} />
+            <div className="grid flex-grow min-w-[150px] items-center gap-1.5">
+              <Label>Date Type</Label>
+              <Select value={dateType} onValueChange={(value) => setDateType(value as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="historical">Historical</SelectItem>
+                  <SelectItem value="oneDay">One day</SelectItem>
+                  <SelectItem value="range">Range</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            {dateType === "oneDay" && (
+              <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
+                <Label htmlFor="date">Date</Label>
+                <DatePicker date={newDate} setDate={setNewDate} />
+              </div>
+            )}
+            {dateType === "range" && (
+              <>
+                <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <DatePicker date={startDate} setDate={setStartDate} />
+                </div>
+                <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <DatePicker date={endDate} setDate={setEndDate} />
+                </div>
+              </>
+            )}
             <Button onClick={handleAddMigration}>Add</Button>
           </CardContent>
         </Card>
@@ -266,23 +322,7 @@ const Migration = () => {
                               value={editFormData.fundName}
                               onChange={(e) => setEditFormData({ ...editFormData, fundName: e.target.value })}
                             />
-                            <DatePicker
-                              date={editFormData.date}
-                              setDate={(date) => setEditFormData({ ...editFormData, date })}
-                            />
-                            <Select
-                              value={editFormData.env}
-                              onValueChange={(value) => setEditFormData({ ...editFormData, env: value })}
-                            >
-                              <SelectTrigger className="w-auto flex-grow">
-                                <SelectValue placeholder="Environment" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="prod">Production</SelectItem>
-                                <SelectItem value="staging">Staging</SelectItem>
-                                <SelectItem value="dev">Development</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            {/* Add edit functionality for dates here if needed */}
                           </div>
                           <Button variant="outline" size="icon" onClick={() => handleSaveEdit(item.id)}>
                             <Check className="h-4 w-4 text-green-500" />
@@ -300,7 +340,7 @@ const Migration = () => {
                             </div>
                             <div>
                               <Label className="text-xs text-muted-foreground">Date</Label>
-                              <p>{item.date.toLocaleDateString()}</p>
+                              <p>{renderDateDisplay(item)}</p>
                             </div>
                             <div>
                               <Label className="text-xs text-muted-foreground">Environment</Label>
