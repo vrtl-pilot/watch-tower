@@ -44,7 +44,7 @@ const Migration = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date }>({ fundName: "" });
+  const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date; env: string }>({ fundName: "", env: "" });
 
   const handleAddMigration = () => {
     if (newFundName && newDate) {
@@ -98,7 +98,7 @@ const Migration = () => {
 
   const handleEdit = (item: MigrationItem) => {
     setEditingId(item.id);
-    setEditFormData({ fundName: item.fundName, date: item.date });
+    setEditFormData({ fundName: item.fundName, date: item.date, env: item.env });
   };
 
   const handleCancelEdit = () => {
@@ -110,7 +110,7 @@ const Migration = () => {
     setMigrations(
       migrations.map((item) =>
         item.id === id
-          ? { ...item, fundName: editFormData.fundName, date: editFormData.date! }
+          ? { ...item, fundName: editFormData.fundName, date: editFormData.date!, env: editFormData.env }
           : item
       )
     );
@@ -209,7 +209,19 @@ const Migration = () => {
                             date={editFormData.date}
                             setDate={(date) => setEditFormData({ ...editFormData, date })}
                           />
-                          <p className="text-sm text-muted-foreground uppercase">{item.env}</p>
+                          <Select
+                            value={editFormData.env}
+                            onValueChange={(value) => setEditFormData({ ...editFormData, env: value })}
+                          >
+                            <SelectTrigger className="w-auto flex-grow">
+                              <SelectValue placeholder="Environment" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="prod">Production</SelectItem>
+                              <SelectItem value="staging">Staging</SelectItem>
+                              <SelectItem value="dev">Development</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <Button variant="outline" size="icon" onClick={() => handleSaveEdit(item.id)}>
                           <Check className="h-4 w-4 text-green-500" />
@@ -227,7 +239,7 @@ const Migration = () => {
                           </div>
                           <div>
                             <Label className="text-xs text-muted-foreground">Date</Label>
-                            <p>{item.date.toLocaleDateString()}</p>
+                            <p>{item.date.toLocaleDateКогда()}</p>
                           </div>
                           <div>
                             <Label className="text-xs text-muted-foreground">Environment</Label>
