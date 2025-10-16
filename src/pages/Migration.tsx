@@ -239,7 +239,7 @@ const Migration = () => {
                           </div>
                           <div>
                             <Label className="text-xs text-muted-foreground">Date</Label>
-                            <p>{item.date.toLocaleDateКогда()}</p>
+                            <p>{item.date.toLocaleDateString()}</p>
                           </div>
                           <div>
                             <Label className="text-xs text-muted-foreground">Environment</Label>
