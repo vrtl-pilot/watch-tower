@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Trash2, Pencil, Check, Ban } from "lucide-react";
+import { X, Trash2, Pencil, Check, Ban, Search } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { showSuccess } from "@/utils/toast";
+import { FundSearchDialog } from "@/components/FundSearchDialog";
 
 interface MigrationItem {
   id: number;
@@ -46,6 +47,7 @@ const Migration = () => {
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<{ fundName: string; date?: Date; env: string }>({ fundName: "", env: "" });
+  const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
 
   const handleAddMigration = () => {
     if (newFundName && newDate) {
@@ -130,6 +132,11 @@ const Migration = () => {
     showSuccess("Migration queue has been cleared.");
   };
 
+  const handleSelectFund = (fundName: string) => {
+    setNewFundName(fundName);
+    setIsFundSearchOpen(false);
+  };
+
   return (
     <>
       <div className="p-8 pt-6 space-y-4">
@@ -154,11 +161,24 @@ const Migration = () => {
           <CardContent className="flex flex-wrap items-end gap-4">
             <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
               <Label htmlFor="fundName">Fund name</Label>
-              <Input
-                id="fundName"
-                value={newFundName}
-                onChange={(e) => setNewFundName(e.target.value)}
-              />
+              <div className="relative flex items-center">
+                <Input
+                  id="fundName"
+                  value={newFundName}
+                  onChange={(e) => setNewFundName(e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 h-7 w-7"
+                  onClick={() => setIsFundSearchOpen(true)}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="sr-only">Search funds</span>
+                </Button>
+              </div>
             </div>
             <div className="grid flex-grow min-w-[200px] items-center gap-1.5">
               <Label htmlFor="date">Date</Label>
@@ -348,6 +368,11 @@ const Migration = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <FundSearchDialog
+        open={isFundSearchOpen}
+        onOpenChange={setIsFundSearchOpen}
+        onSelectFund={handleSelectFund}
+      />
     </>
   );
 };
