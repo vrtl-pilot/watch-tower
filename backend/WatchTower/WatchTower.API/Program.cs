@@ -1,12 +1,17 @@
 using WatchTower.API.Hubs;
+using WatchTower.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR(); // Add SignalR services
+builder.Services.AddSignalR();
+
+builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
+
 
 var app = builder.Build();
 
@@ -19,11 +24,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<MigrationHub>("/migrationhub"); // Map the hub to its endpoint
+
+app.MapHub<MigrationHub>("/migrationhub");
+
 
 app.Run();

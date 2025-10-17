@@ -1,35 +1,44 @@
 using Microsoft.AspNetCore.Mvc;
 using WatchTower.Shared.Models;
-using System.Collections.Generic;
-using System.Linq;
+using WatchTower.API.Services;
+using System.Threading.Tasks;
+using System;
 
-namespace WatchTower.API.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class FundEligibilityController : ControllerBase
+namespace WatchTower.API.Controllers
 {
-    [HttpPost("check")]
-    public ActionResult<FundEligibilityResult> CheckEligibility([FromBody] FundEligibilityRequest request)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class FundEligibilityController : ControllerBase
     {
-        // Simulate eligibility check
-        var criteria = new List<Criterion>
+        private readonly IFundEligibilityService _eligibilityService;
+
+        public FundEligibilityController(IFundEligibilityService eligibilityService)
         {
-            new() { Name = "Minimum Investment", Met = true },
-            new() { Name = "Accredited Investor", Met = !(request.FundName?.Contains("Retail") ?? false), Reason = (request.FundName?.Contains("Retail") ?? false) ? "Retail fund selected, accredited status required" : null },
-            new() { Name = "Geographic Region", Met = true },
-            new() { Name = "Fund is Open", Met = !(request.FundName?.Contains("Closed") ?? false), Reason = (request.FundName?.Contains("Closed") ?? false) ? "This fund is closed to new investors." : null }
-        };
+            _eligibilityService = eligibilityService;
+        }
 
-        var isEligible = criteria.All(c => c.Met);
-
-        var result = new FundEligibilityResult
+        [HttpPost("check")]
+        public async Task<ActionResult<FundEligibilityResult>> CheckEligibility([FromBody] FundEligibilityRequest request)
         {
-            FundName = request.FundName,
-            Status = isEligible ? "Eligible" : "Ineligible",
-            Criteria = criteria
-        };
+            if (request == null || string.IsNullOrWhiteSpace(request.FundName))
+            {
+                return BadRequest("Fund name is required.");
+            }
 
-        return Ok(result);
+            try
+            {
+                var result = await _eligibilityService.CheckEligibilityAsync(request);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                // In a real app, you would log the full exception.
+                return StatusCode(500, "An internal server error occurred while checking eligibility.");
+            }
+        }
     }
 }
