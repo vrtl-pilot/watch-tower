@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Eraser } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
+import { CopyButton } from '@/components/CopyButton';
 
 const JsonFormatter = () => {
   const [rawText, setRawText] = useState('');
@@ -57,7 +58,10 @@ const JsonFormatter = () => {
           <div className="flex flex-col lg:flex-row gap-4 h-[60vh]">
             {/* Left Panel: Raw Text */}
             <div className="flex flex-col flex-1">
-              <label className="text-sm font-medium mb-2">Raw Text</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Raw Text</label>
+                <CopyButton content={rawText} label="Raw Text" className="h-7 w-7" />
+              </div>
               <Textarea
                 placeholder="Paste raw text or compact JSON here..."
                 value={rawText}
@@ -81,7 +85,10 @@ const JsonFormatter = () => {
 
             {/* Right Panel: Formatted JSON */}
             <div className="flex flex-col flex-1">
-              <label className="text-sm font-medium mb-2">Formatted JSON</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Formatted JSON</label>
+                <CopyButton content={formattedJson} label="Formatted JSON" className="h-7 w-7" />
+              </div>
               <Textarea
                 placeholder="Formatted JSON will appear here..."
                 value={formattedJson}
