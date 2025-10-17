@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -25,6 +25,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "./ui/badge";
 import { RedisKeyValueDialog } from "./RedisKeyValueDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface RedisKeyEntry {
   key: string;
@@ -36,6 +43,8 @@ interface RedisKeyEntry {
 interface DeleteKeyRequest {
   key: string;
 }
+
+const KEY_TYPES = ["All", "string", "hash", "list", "zset", "set", "stream"];
 
 const formatTtl = (ttl: number) => {
   if (ttl === -1) return "Persistent";
@@ -51,8 +60,10 @@ const formatSize = (size: number) => {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+// Note: The current mock API only filters by pattern. We fetch and then filter by type on the frontend.
 const fetchKeys = async (pattern: string): Promise<RedisKeyEntry[]> => {
-  const response = await fetch(`/api/redis/keys?pattern=${encodeURIComponent(pattern)}&limit=10`);
+  // We fetch a larger set of data to allow frontend filtering to work with the mock
+  const response = await fetch(`/api/redis/keys?pattern=${encodeURIComponent(pattern)}&limit=50`); 
   if (!response.ok) {
     throw new Error("Failed to fetch Redis keys.");
   }
@@ -62,17 +73,24 @@ const fetchKeys = async (pattern: string): Promise<RedisKeyEntry[]> => {
 export const RedisKeyTable = () => {
   const queryClient = useQueryClient();
   const [searchPattern, setSearchPattern] = useState("");
+  const [selectedType, setSelectedType] = useState("All");
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const [keyToView, setKeyToView] = useState<string | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const { data: keys, isLoading, refetch } = useQuery<RedisKeyEntry[]>({
+  const { data: rawKeys, isLoading, refetch } = useQuery<RedisKeyEntry[]>({
     queryKey: ['redisKeys', searchPattern],
     queryFn: () => fetchKeys(searchPattern),
     refetchInterval: 10000,
   });
+
+  const keys = useMemo(() => {
+    if (!rawKeys) return [];
+    if (selectedType === "All") return rawKeys;
+    return rawKeys.filter(key => key.type.toLowerCase() === selectedType.toLowerCase());
+  }, [rawKeys, selectedType]);
 
   const deleteMutation = useMutation({
     mutationFn: async ({ key }: DeleteKeyRequest) => {
@@ -130,14 +148,24 @@ export const RedisKeyTable = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+          <form onSubmit={handleSearch} className="flex flex-wrap gap-2 mb-4">
             <Input
               placeholder="Search keys (e.g., user:*, cache:fund:)"
               value={searchPattern}
               onChange={(e) => setSearchPattern(e.target.value)}
-              className="flex-1"
+              className="flex-1 min-w-[200px]"
               disabled={isLoading}
             />
+            <Select value={selectedType} onValueChange={setSelectedType} disabled={isLoading}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Filter by Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {KEY_TYPES.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
               Search
@@ -197,7 +225,7 @@ export const RedisKeyTable = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No keys found matching the pattern "{searchPattern}".
+                      No keys found matching the pattern "{searchPattern}" and type "{selectedType}".
                     </TableCell>
                   </TableRow>
                 )}
