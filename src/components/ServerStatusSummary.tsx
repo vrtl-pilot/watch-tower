@@ -9,8 +9,8 @@ interface ServerItem {
   id: string;
   serverName: string;
   service: string;
-  serverStatus: "Running" | "Stopped";
-  serviceStatus: "Running" | "Stopped" | "Down";
+  serverStatus: "Running" | "Stopped" | "Degraded";
+  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
 }
 
 interface ServerStatusSummaryProps {
@@ -18,10 +18,11 @@ interface ServerStatusSummaryProps {
   data: ServerItem[];
 }
 
-type CombinedStatus = "Online" | "Offline" | "Service Down" | "Service Stopped";
+type CombinedStatus = "Online" | "Offline" | "Service Down" | "Service Stopped" | "Degraded";
 
 const getCombinedStatus = (item: ServerItem): CombinedStatus => {
   if (item.serverStatus === "Stopped") return "Offline";
+  if (item.serverStatus === "Degraded" || item.serviceStatus === "Degraded") return "Degraded";
   if (item.serviceStatus === "Down") return "Service Down";
   if (item.serviceStatus === "Stopped") return "Service Stopped";
   return "Online";
@@ -33,6 +34,7 @@ const StatusBadge = ({ status }: { status: CombinedStatus }) => {
     Offline: "bg-gray-500 hover:bg-gray-500/80",
     "Service Down": "bg-yellow-500 hover:bg-yellow-500/80",
     "Service Stopped": "bg-red-600 hover:bg-red-600/80",
+    Degraded: "bg-orange-500 hover:bg-orange-500/80", // New color for Degraded
   };
   return (
     <Badge className={cn("text-white", statusMap[status])}>{status}</Badge>

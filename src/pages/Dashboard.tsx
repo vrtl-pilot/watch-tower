@@ -19,8 +19,8 @@ interface ServerItem {
   id: string;
   serverName: string;
   service: string;
-  serverStatus: "Running" | "Stopped";
-  serviceStatus: "Running" | "Stopped" | "Down";
+  serverStatus: "Running" | "Stopped" | "Degraded";
+  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
 }
 
 const topErrorsByDescriptionData = [

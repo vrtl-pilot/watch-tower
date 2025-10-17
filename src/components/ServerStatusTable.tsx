@@ -28,8 +28,8 @@ interface ServerItem {
   id: string;
   serverName: string;
   service: string;
-  serverStatus: "Running" | "Stopped";
-  serviceStatus: "Running" | "Stopped" | "Down";
+  serverStatus: "Running" | "Stopped" | "Degraded";
+  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
 }
 
 type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService";
@@ -39,13 +39,14 @@ interface ServerStatusTableProps {
   onAction: (id: string, actionType: ActionType, serverName: string, serviceName: string) => void;
 }
 
-const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" }) => (
+const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" | "Degraded" }) => (
   <Badge
     className={cn(
       "text-white",
       status === "Running" && "bg-green-600 hover:bg-green-600/80",
       status === "Stopped" && "bg-red-600 hover:bg-red-600/80",
-      status === "Down" && "bg-yellow-500 hover:bg-yellow-500/80"
+      status === "Down" && "bg-yellow-500 hover:bg-yellow-500/80",
+      status === "Degraded" && "bg-orange-500 hover:bg-orange-500/80" // New color for Degraded
     )}
   >
     {status}
@@ -130,7 +131,7 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
                   </div>
 
                   {/* Service Actions */}
-                  {item.serverStatus === "Running" && (
+                  {(item.serverStatus === "Running" || item.serverStatus === "Degraded") && (
                     <>
                       <Separator orientation="vertical" className="h-6 mx-2" />
                       <div className="flex items-center gap-1">
@@ -139,7 +140,7 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startService")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
                             <TooltipContent><p>Start Service</p></TooltipContent>
                           </Tooltip>
-                        ) : item.serviceStatus === "Down" ? (
+                        ) : (item.serviceStatus === "Down" || item.serviceStatus === "Degraded") ? (
                           <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartService")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
                             <TooltipContent><p>Restart Service</p></TooltipContent>
