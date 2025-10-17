@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, BarChart2, Users, Settings, Component, ChevronLeft, TowerControl, DatabaseZap, ShieldCheck, Server, LineChart, Code, FileJson } from "lucide-react";
+import { LayoutDashboard, BarChart2, Users, Settings, Component, ChevronLeft, TowerControl, DatabaseZap, ShieldCheck, Server, LineChart, Code, FileJson, Zap, Database } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -55,7 +55,7 @@ const menuItems = [
     icon: Code,
   },
   {
-    label: "JSON Formatter", // Updated label
+    label: "JSON Formatter",
     href: "/stat-json",
     icon: FileJson,
   },
@@ -68,6 +68,11 @@ const menuItems = [
     label: "Servers",
     href: "/servers",
     icon: Server,
+  },
+  {
+    label: "Redis",
+    href: "/redis",
+    icon: Zap,
   },
   {
     label: "Settings",
