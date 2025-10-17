@@ -14,14 +14,7 @@ import { EndpointBarChart } from "@/components/EndpointBarChart";
 import { ServerStatusSummary } from "@/components/ServerStatusSummary";
 import { showError } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
-
-interface ServerItem {
-  id: string;
-  serverName: string;
-  service: string;
-  serverStatus: "Running" | "Stopped" | "Degraded";
-  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
-}
+import { ServerItem, formatServerStatuses } from "@/lib/server-status-utils";
 
 const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
@@ -57,7 +50,8 @@ const Dashboard = () => {
           return;
         }
 
-        const allServers: ServerItem[] = await response.json();
+        const rawServers = await response.json();
+        const allServers: ServerItem[] = formatServerStatuses(rawServers);
 
         setWebApiData(allServers.filter(s => s.service === "Web API"));
         setWorkerData(allServers.filter(s => s.service === "Worker Service"));

@@ -23,14 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Play, Power, RefreshCw, StopCircle } from "lucide-react";
-
-interface ServerItem {
-  id: string;
-  serverName: string;
-  service: string;
-  serverStatus: "Running" | "Stopped" | "Degraded";
-  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
-}
+import { ServerItem } from "@/lib/server-status-utils";
 
 type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService";
 

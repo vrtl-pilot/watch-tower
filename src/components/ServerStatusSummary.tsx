@@ -4,14 +4,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
-
-interface ServerItem {
-  id: string;
-  serverName: string;
-  service: string;
-  serverStatus: "Running" | "Stopped" | "Degraded";
-  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
-}
+import { ServerItem } from "@/lib/server-status-utils";
 
 interface ServerStatusSummaryProps {
   title: string;

@@ -11,14 +11,7 @@ import { ServerStatusTable } from "@/components/ServerStatusTable";
 import { showError, showLoading } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 import { useMigrationStore } from "@/hooks/use-migration-store";
-
-interface ServerItem {
-  id: string;
-  serverName: string;
-  service: string;
-  serverStatus: "Running" | "Stopped" | "Degraded";
-  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
-}
+import { ServerItem, formatServerStatuses, formatServerStatus } from "@/lib/server-status-utils";
 
 const Servers = () => {
   const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
@@ -57,7 +50,8 @@ const Servers = () => {
           throw new Error('Failed to fetch server data');
         }
 
-        const allServers: ServerItem[] = await response.json();
+        const rawServers = await response.json();
+        const allServers: ServerItem[] = formatServerStatuses(rawServers);
 
         setWebApiData(allServers.filter(s => s.service === "Web API"));
         setWorkerData(allServers.filter(s => s.service === "Worker Service"));
@@ -74,9 +68,11 @@ const Servers = () => {
   // Effect to listen for SignalR updates
   useEffect(() => {
     if (connection) {
-      const handler = (server: ServerItem) => {
-        // Update local state when a status update is received via SignalR
-        updateServerData(server);
+      // Note: SignalR sends the raw C# object, which means status fields are numbers.
+      // We must format the incoming server object before updating the state.
+      const handler = (rawServer: any) => {
+        const updatedServer = formatServerStatus(rawServer);
+        updateServerData(updatedServer);
         // The toast dismissal and success notification are handled in useMigrationStore
       };
 
