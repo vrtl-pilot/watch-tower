@@ -12,7 +12,7 @@ import { showError } from "@/utils/toast";
 
 interface ServerItem {
   id: string;
-  server: string;
+  serverName: string;
   service: string;
   serverStatus: "Running" | "Stopped";
   serviceStatus: "Running" | "Stopped" | "Down";
