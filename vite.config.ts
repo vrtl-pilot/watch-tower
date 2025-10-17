@@ -12,6 +12,12 @@ export default defineConfig(() => ({
         target: 'https://localhost:7179',
         changeOrigin: true,
         secure: false,
+      },
+      '/migrationhub': {
+        target: 'https://localhost:7179',
+        changeOrigin: true,
+        secure: false,
+        ws: true, // Enable WebSocket proxying
       }
     }
   },
