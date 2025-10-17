@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -6,18 +7,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Play, Power, RefreshCw, StopCircle } from "lucide-react";
+import { showSuccess } from "@/utils/toast";
 
 interface ServerItem {
+  id: string;
   server: string;
   service: string;
-  serverStatus: "Running" | "Stopped" | string;
-  serviceStatus: "Running" | "Stopped" | string;
+  serverStatus: "Running" | "Stopped";
+  serviceStatus: "Running" | "Stopped";
 }
 
 interface ServerStatusTableProps {
   data: ServerItem[];
+  onAction: (id: string, newStatus: Partial<ServerItem>) => void;
 }
 
 const StatusBadge = ({ status }: { status: string }) => (
@@ -33,31 +50,147 @@ const StatusBadge = ({ status }: { status: string }) => (
   </Badge>
 );
 
-export const ServerStatusTable = ({ data }: ServerStatusTableProps) => {
+type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService";
+
+export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ServerItem | null>(null);
+  const [actionType, setActionType] = useState<ActionType | null>(null);
+
+  const handleActionClick = (item: ServerItem, type: ActionType) => {
+    setSelectedItem(item);
+    setActionType(type);
+    setDialogOpen(true);
+  };
+
+  const handleConfirmAction = () => {
+    if (!selectedItem || !actionType) return;
+
+    let newStatus: Partial<ServerItem> = {};
+    let successMessage = "";
+
+    switch (actionType) {
+      case "startServer":
+        newStatus = { serverStatus: "Running" };
+        successMessage = `Server ${selectedItem.server} started successfully.`;
+        break;
+      case "stopServer":
+        newStatus = { serverStatus: "Stopped", serviceStatus: "Stopped" };
+        successMessage = `Server ${selectedItem.server} shut down successfully.`;
+        break;
+      case "restartServer":
+        newStatus = { serverStatus: "Running", serviceStatus: "Running" };
+        successMessage = `Server ${selectedItem.server} restarted successfully.`;
+        break;
+      case "startService":
+        newStatus = { serviceStatus: "Running" };
+        successMessage = `Service ${selectedItem.service} started successfully.`;
+        break;
+      case "stopService":
+        newStatus = { serviceStatus: "Stopped" };
+        successMessage = `Service ${selectedItem.service} stopped successfully.`;
+        break;
+      case "restartService":
+        newStatus = { serviceStatus: "Running" };
+        successMessage = `Service ${selectedItem.service} restarted successfully.`;
+        break;
+    }
+
+    onAction(selectedItem.id, newStatus);
+    showSuccess(successMessage);
+    setDialogOpen(false);
+  };
+
+  const getDialogContent = () => {
+    if (!selectedItem || !actionType) return { title: "", description: "" };
+    const contentMap: Record<ActionType, { title: string; description: string }> = {
+      startServer: { title: "Start Server?", description: `Are you sure you want to start the server ${selectedItem.server}?` },
+      stopServer: { title: "Shutdown Server?", description: `This will shut down the server ${selectedItem.server} and stop its services. Are you sure?` },
+      restartServer: { title: "Restart Server?", description: `Are you sure you want to restart the server ${selectedItem.server}?` },
+      startService: { title: "Start Service?", description: `Are you sure you want to start the ${selectedItem.service} service?` },
+      stopService: { title: "Stop Service?", description: `Are you sure you want to stop the ${selectedItem.service} service?` },
+      restartService: { title: "Restart Service?", description: `Are you sure you want to restart the ${selectedItem.service} service?` },
+    };
+    return contentMap[actionType];
+  };
+
+  const { title, description } = getDialogContent();
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Server</TableHead>
-          <TableHead>Service</TableHead>
-          <TableHead>Server Status</TableHead>
-          <TableHead className="text-right">Service Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((item, index) => (
-          <TableRow key={`${item.server}-${index}`}>
-            <TableCell className="font-medium">{item.server}</TableCell>
-            <TableCell>{item.service}</TableCell>
-            <TableCell>
-              <StatusBadge status={item.serverStatus} />
-            </TableCell>
-            <TableCell className="text-right">
-              <StatusBadge status={item.serviceStatus} />
-            </TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Server</TableHead>
+            <TableHead>Service</TableHead>
+            <TableHead>Server Status</TableHead>
+            <TableHead>Service Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {data.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell className="font-medium">{item.server}</TableCell>
+              <TableCell>{item.service}</TableCell>
+              <TableCell><StatusBadge status={item.serverStatus} /></TableCell>
+              <TableCell><StatusBadge status={item.serviceStatus} /></TableCell>
+              <TableCell className="text-right space-x-1">
+                {/* Server Actions */}
+                {item.serverStatus === "Stopped" ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startServer")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
+                    <TooltipContent><p>Start Server</p></TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopServer")}><Power className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                      <TooltipContent><p>Shutdown Server</p></TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartServer")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
+                      <TooltipContent><p>Restart Server</p></TooltipContent>
+                    </Tooltip>
+                  </>
+                )}
+                {/* Service Actions */}
+                {item.serverStatus === "Running" && (
+                  item.serviceStatus === "Stopped" ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startService")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
+                      <TooltipContent><p>Start Service</p></TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <>
+                      <Tooltip>
+                        <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopService")}><StopCircle className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                        <TooltipContent><p>Stop Service</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartService")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
+                        <TooltipContent><p>Restart Service</p></TooltipContent>
+                      </Tooltip>
+                    </>
+                  )
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAction}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
