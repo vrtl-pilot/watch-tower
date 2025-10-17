@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerStatusTable } from "@/components/ServerStatusTable";
-import { showError } from "@/utils/toast";
+import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 interface ServerItem {
@@ -52,9 +52,22 @@ const Servers = () => {
   const handleAction = async (
     id: string,
     actionType: string,
+    serverName: string,
+    serviceName: string,
     setData: React.Dispatch<React.SetStateAction<ServerItem[]>>
   ) => {
+    let loadingToastId: string | number | undefined;
+    
+    // Format actionType (e.g., 'startServer' -> 'start server')
+    const actionDescription = actionType.replace(/([A-Z])/g, ' $1').toLowerCase();
+    const targetName = actionType.includes('Server') ? serverName : serviceName;
+    const loadingMessage = `Requesting ${actionDescription} for ${targetName}...`;
+
     try {
+      // 1. Show persistent loading toast
+      loadingToastId = showLoading(loadingMessage);
+
+      // 2. Perform API call
       const response = await fetch('/api/servers/action', {
         method: 'POST',
         headers: {
@@ -70,15 +83,26 @@ const Servers = () => {
 
       const updatedServer: ServerItem = await response.json();
 
-      // Update the state with the new data from the backend
+      // 3. Update local state
       setData(prevData =>
         prevData.map(item =>
           item.id === id ? { ...item, ...updatedServer } : item
         )
       );
+      
+      // 4. Show success notification
+      const successMessage = `${targetName} on ${serverName} successfully updated. Status: ${updatedServer.serverStatus}/${updatedServer.serviceStatus}.`;
+      showSuccess(successMessage);
+
     } catch (error: any) {
       console.error("Error performing server action:", error);
-      showError(error.message || "An error occurred while performing the action.");
+      // 4. Show error notification
+      showError(error.message || `An error occurred while performing ${actionDescription} on ${targetName}.`);
+    } finally {
+      // 5. Dismiss loading toast
+      if (loadingToastId) {
+        dismissToast(loadingToastId as string);
+      }
     }
   };
 
@@ -106,7 +130,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={webApiData}
-              onAction={(id, actionType) => handleAction(id, actionType, setWebApiData)}
+              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName, setWebApiData)}
             />
           </CardContent>
         </Card>
@@ -118,7 +142,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={workerData}
-              onAction={(id, actionType) => handleAction(id, actionType, setWorkerData)}
+              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName, setWorkerData)}
             />
           </CardContent>
         </Card>
@@ -130,7 +154,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={lighthouseData}
-              onAction={(id, actionType) => handleAction(id, actionType, setLighthouseData)}
+              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName, setLighthouseData)}
             />
           </CardContent>
         </Card>

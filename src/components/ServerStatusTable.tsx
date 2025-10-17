@@ -23,7 +23,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Play, Power, RefreshCw, StopCircle } from "lucide-react";
-import { showSuccess } from "@/utils/toast";
 
 interface ServerItem {
   id: string;
@@ -37,7 +36,7 @@ type ActionType = "startServer" | "stopServer" | "restartServer" | "startService
 
 interface ServerStatusTableProps {
   data: ServerItem[];
-  onAction: (id: string, actionType: ActionType) => void;
+  onAction: (id: string, actionType: ActionType, serverName: string, serviceName: string) => void;
 }
 
 const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" }) => (
@@ -67,31 +66,9 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
   const handleConfirmAction = () => {
     if (!selectedItem || !actionType) return;
 
-    let successMessage = "";
-
-    switch (actionType) {
-      case "startServer":
-        successMessage = `Server ${selectedItem.serverName} start request sent.`;
-        break;
-      case "stopServer":
-        successMessage = `Server ${selectedItem.serverName} shutdown request sent.`;
-        break;
-      case "restartServer":
-        successMessage = `Server ${selectedItem.serverName} restart request sent.`;
-        break;
-      case "startService":
-        successMessage = `Service ${selectedItem.service} start request sent.`;
-        break;
-      case "stopService":
-        successMessage = `Service ${selectedItem.service} stop request sent.`;
-        break;
-      case "restartService":
-        successMessage = `Service ${selectedItem.service} restart request sent.`;
-        break;
-    }
-
-    onAction(selectedItem.id, actionType);
-    showSuccess(successMessage);
+    // Pass necessary details to the parent component to handle the API call and toast lifecycle
+    onAction(selectedItem.id, actionType, selectedItem.serverName, selectedItem.service);
+    
     setDialogOpen(false);
   };
 
