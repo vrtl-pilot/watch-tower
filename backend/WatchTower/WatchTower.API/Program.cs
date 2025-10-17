@@ -11,6 +11,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
+builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
+builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
 
 
 var app = builder.Build();

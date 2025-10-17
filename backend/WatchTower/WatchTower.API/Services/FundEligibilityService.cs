@@ -1,34 +1,24 @@
 using Microsoft.Data.SqlClient;
 using WatchTower.Shared.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace WatchTower.API.Services
 {
     public class FundEligibilityService : IFundEligibilityService
     {
-        private readonly IConfiguration _configuration;
+        private readonly IDataAccessHelper _dataAccessHelper;
 
-        public FundEligibilityService(IConfiguration configuration)
+        public FundEligibilityService(IDataAccessHelper dataAccessHelper)
         {
-            _configuration = configuration;
+            _dataAccessHelper = dataAccessHelper;
         }
 
         public async Task<FundEligibilityResult> CheckEligibilityAsync(FundEligibilityRequest request)
         {
-            var connectionString = GetConnectionString(request.Environment);
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new ArgumentException("Invalid environment specified or connection string not found.");
-            }
-
-            var criteria = new List<Criterion>();
-
             // IMPORTANT: This is a placeholder query. You should replace it with your actual query.
-            // This example assumes you have tables named 'Criteria', 'Funds', and a linking table 'FundCriteria'.
             const string query = @"
                 SELECT 
                     c.Name AS CriterionName,
@@ -40,33 +30,18 @@ namespace WatchTower.API.Services
                 WHERE f.Name = @FundName;
             ";
 
-            try
+            var parameters = new[]
             {
-                await using var connection = new SqlConnection(connectionString);
-                await connection.OpenAsync();
+                new SqlParameter("@FundName", request.FundName ?? (object)DBNull.Value)
+            };
 
-                await using var command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@FundName", request.FundName ?? (object)DBNull.Value);
-
-                await using var reader = await command.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
-                {
-                    criteria.Add(new Criterion
-                    {
-                        Name = reader["CriterionName"].ToString(),
-                        Met = Convert.ToBoolean(reader["IsMet"]),
-                        Reason = reader["Reason"] != DBNull.Value ? reader["Reason"].ToString() : null
-                    });
-                }
-            }
-            catch (SqlException ex)
+            var criteria = await _dataAccessHelper.QueryAsync(request.Environment, query, reader => new Criterion
             {
-                // In a real application, use a proper logging framework.
-                Console.WriteLine($"SQL Error: {ex.Message}");
-                throw new Exception("An error occurred while querying the database.", ex);
-            }
-            
+                Name = reader["CriterionName"].ToString(),
+                Met = Convert.ToBoolean(reader["IsMet"]),
+                Reason = reader["Reason"] != DBNull.Value ? reader["Reason"].ToString() : null
+            }, parameters);
+
             if (criteria.Count == 0)
             {
                 return new FundEligibilityResult
@@ -84,17 +59,6 @@ namespace WatchTower.API.Services
                 FundName = request.FundName,
                 Status = isEligible ? "Eligible" : "Ineligible",
                 Criteria = criteria
-            };
-        }
-
-        private string GetConnectionString(string? environment)
-        {
-            return environment?.ToLower() switch
-            {
-                "prod" => _configuration.GetConnectionString("ProdDb"),
-                "staging" => _configuration.GetConnectionString("StagingDb"),
-                "dev" => _configuration.GetConnectionString("DevDb"),
-                _ => _configuration.GetConnectionString("DevDb") // Default to Dev
             };
         }
     }
