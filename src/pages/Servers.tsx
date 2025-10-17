@@ -10,18 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerStatusTable } from "@/components/ServerStatusTable";
 
 const webApiData = [
-  { server: "prod-web-01", service: "User Service", status: "Running" },
-  { server: "prod-web-02", service: "Order Service", status: "Stopped" },
-  { server: "prod-web-03", service: "Product Service", status: "Running" },
+  { server: "prod-web-01", service: "User Service", serverStatus: "Running", serviceStatus: "Running" },
+  { server: "prod-web-02", service: "Order Service", serverStatus: "Running", serviceStatus: "Stopped" },
+  { server: "prod-web-03", service: "Product Service", serverStatus: "Stopped", serviceStatus: "Stopped" },
 ];
 
 const workerData = [
-    { server: "prod-worker-01", service: "Data Processing", status: "Running" },
-    { server: "prod-worker-02", service: "Email Notifications", status: "Running" },
+    { server: "prod-worker-01", service: "Data Processing", serverStatus: "Running", serviceStatus: "Running" },
+    { server: "prod-worker-02", service: "Email Notifications", serverStatus: "Running", serviceStatus: "Running" },
 ];
 
 const lighthouseData = [
-    { server: "prod-lh-01", service: "Metrics & Logging", status: "Stopped" },
+    { server: "prod-lh-01", service: "Metrics & Logging", serverStatus: "Stopped", serviceStatus: "Stopped" },
 ];
 
 

@@ -12,12 +12,26 @@ import { cn } from "@/lib/utils";
 interface ServerItem {
   server: string;
   service: string;
-  status: "Running" | "Stopped" | string;
+  serverStatus: "Running" | "Stopped" | string;
+  serviceStatus: "Running" | "Stopped" | string;
 }
 
 interface ServerStatusTableProps {
   data: ServerItem[];
 }
+
+const StatusBadge = ({ status }: { status: string }) => (
+  <Badge
+    className={cn(
+      "text-white",
+      status === "Running"
+        ? "bg-green-600 hover:bg-green-600/80"
+        : "bg-red-600 hover:bg-red-600/80"
+    )}
+  >
+    {status}
+  </Badge>
+);
 
 export const ServerStatusTable = ({ data }: ServerStatusTableProps) => {
   return (
@@ -26,25 +40,20 @@ export const ServerStatusTable = ({ data }: ServerStatusTableProps) => {
         <TableRow>
           <TableHead>Server</TableHead>
           <TableHead>Service</TableHead>
-          <TableHead className="text-right">Status</TableHead>
+          <TableHead>Server Status</TableHead>
+          <TableHead className="text-right">Service Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((item) => (
-          <TableRow key={item.server}>
+        {data.map((item, index) => (
+          <TableRow key={`${item.server}-${index}`}>
             <TableCell className="font-medium">{item.server}</TableCell>
             <TableCell>{item.service}</TableCell>
+            <TableCell>
+              <StatusBadge status={item.serverStatus} />
+            </TableCell>
             <TableCell className="text-right">
-              <Badge
-                className={cn(
-                  "text-white",
-                  item.status === "Running"
-                    ? "bg-green-600 hover:bg-green-600/80"
-                    : "bg-red-600 hover:bg-red-600/80"
-                )}
-              >
-                {item.status}
-              </Badge>
+              <StatusBadge status={item.serviceStatus} />
             </TableCell>
           </TableRow>
         ))}
