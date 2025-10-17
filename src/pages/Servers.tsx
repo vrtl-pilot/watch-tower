@@ -54,18 +54,37 @@ const Servers = () => {
     fetchServers();
   }, []);
 
-  const handleAction = (
+  const handleAction = async (
     id: string,
-    newStatus: Partial<ServerItem>,
+    actionType: string,
     setData: React.Dispatch<React.SetStateAction<ServerItem[]>>
   ) => {
-    // NOTE: This only updates local state. A real implementation would
-    // send a request to the backend to perform the action.
-    setData(prevData =>
-      prevData.map(item =>
-        item.id === id ? { ...item, ...newStatus } : item
-      )
-    );
+    try {
+      const response = await fetch('/api/servers/action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, actionType }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to perform server action');
+      }
+
+      const updatedServer = await response.json();
+
+      // Update the state with the new data from the backend
+      setData(prevData =>
+        prevData.map(item =>
+          item.id === id ? { ...item, ...updatedServer } : item
+        )
+      );
+    } catch (error: any) {
+      console.error("Error performing server action:", error);
+      showError(error.message || "An error occurred while performing the action.");
+    }
   };
 
   return (
@@ -92,7 +111,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={webApiData}
-              onAction={(id, newStatus) => handleAction(id, newStatus, setWebApiData)}
+              onAction={(id, actionType) => handleAction(id, actionType, setWebApiData)}
             />
           </CardContent>
         </Card>
@@ -104,7 +123,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={workerData}
-              onAction={(id, newStatus) => handleAction(id, newStatus, setWorkerData)}
+              onAction={(id, actionType) => handleAction(id, actionType, setWorkerData)}
             />
           </CardContent>
         </Card>
@@ -116,7 +135,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={lighthouseData}
-              onAction={(id, newStatus) => handleAction(id, newStatus, setLighthouseData)}
+              onAction={(id, actionType) => handleAction(id, actionType, setLighthouseData)}
             />
           </CardContent>
         </Card>

@@ -33,9 +33,11 @@ interface ServerItem {
   serviceStatus: "Running" | "Stopped" | "Down";
 }
 
+type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService";
+
 interface ServerStatusTableProps {
   data: ServerItem[];
-  onAction: (id: string, newStatus: Partial<ServerItem>) => void;
+  onAction: (id: string, actionType: ActionType) => void;
 }
 
 const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" }) => (
@@ -51,8 +53,6 @@ const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" }) => 
   </Badge>
 );
 
-type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService";
-
 export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ServerItem | null>(null);
@@ -67,37 +67,30 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
   const handleConfirmAction = () => {
     if (!selectedItem || !actionType) return;
 
-    let newStatus: Partial<ServerItem> = {};
     let successMessage = "";
 
     switch (actionType) {
       case "startServer":
-        newStatus = { serverStatus: "Running" };
-        successMessage = `Server ${selectedItem.serverName} started successfully.`;
+        successMessage = `Server ${selectedItem.serverName} start request sent.`;
         break;
       case "stopServer":
-        newStatus = { serverStatus: "Stopped", serviceStatus: "Stopped" };
-        successMessage = `Server ${selectedItem.serverName} shut down successfully.`;
+        successMessage = `Server ${selectedItem.serverName} shutdown request sent.`;
         break;
       case "restartServer":
-        newStatus = { serverStatus: "Running", serviceStatus: "Running" };
-        successMessage = `Server ${selectedItem.serverName} restarted successfully.`;
+        successMessage = `Server ${selectedItem.serverName} restart request sent.`;
         break;
       case "startService":
-        newStatus = { serviceStatus: "Running" };
-        successMessage = `Service ${selectedItem.service} started successfully.`;
+        successMessage = `Service ${selectedItem.service} start request sent.`;
         break;
       case "stopService":
-        newStatus = { serviceStatus: "Stopped" };
-        successMessage = `Service ${selectedItem.service} stopped successfully.`;
+        successMessage = `Service ${selectedItem.service} stop request sent.`;
         break;
       case "restartService":
-        newStatus = { serviceStatus: "Running" };
-        successMessage = `Service ${selectedItem.service} restarted successfully.`;
+        successMessage = `Service ${selectedItem.service} restart request sent.`;
         break;
     }
 
-    onAction(selectedItem.id, newStatus);
+    onAction(selectedItem.id, actionType);
     showSuccess(successMessage);
     setDialogOpen(false);
   };
