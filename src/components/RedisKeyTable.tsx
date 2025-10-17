@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Search, Trash2, RefreshCw, Loader2, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { showError, showSuccess } from "@/utils/toast";
 import {
@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "./ui/badge";
+import { RedisKeyValueDialog } from "./RedisKeyValueDialog";
 
 interface RedisKeyEntry {
   key: string;
@@ -63,6 +64,9 @@ export const RedisKeyTable = () => {
   const [searchPattern, setSearchPattern] = useState("");
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  const [keyToView, setKeyToView] = useState<string | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const { data: keys, isLoading, refetch } = useQuery<RedisKeyEntry[]>({
     queryKey: ['redisKeys', searchPattern],
@@ -95,6 +99,11 @@ export const RedisKeyTable = () => {
     setKeyToDelete(key);
     setIsDeleteDialogOpen(true);
   };
+  
+  const handleViewClick = (key: string) => {
+    setKeyToView(key);
+    setIsViewDialogOpen(true);
+  };
 
   const handleConfirmDelete = () => {
     if (keyToDelete) {
@@ -110,81 +119,93 @@ export const RedisKeyTable = () => {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-medium">Key Management</CardTitle>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => refetch()} disabled={isLoading}>
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-          <Input
-            placeholder="Search keys (e.g., user:*, cache:fund:)"
-            value={searchPattern}
-            onChange={(e) => setSearchPattern(e.target.value)}
-            className="flex-1"
-            disabled={isLoading}
-          />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
-            Search
-          </Button>
-        </form>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-medium">Key Management</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+            <Input
+              placeholder="Search keys (e.g., user:*, cache:fund:)"
+              value={searchPattern}
+              onChange={(e) => setSearchPattern(e.target.value)}
+              className="flex-1"
+              disabled={isLoading}
+            />
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+              Search
+            </Button>
+          </form>
 
-        <div className="border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Key</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>TTL</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                    <p className="text-sm text-muted-foreground mt-2">Loading keys...</p>
-                  </TableCell>
+                  <TableHead>Key</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>TTL</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : keys && keys.length > 0 ? (
-                keys.map((keyEntry) => (
-                  <TableRow key={keyEntry.key}>
-                    <TableCell className="font-mono text-xs max-w-xs truncate">{keyEntry.key}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{keyEntry.type}</Badge>
-                    </TableCell>
-                    <TableCell>{formatTtl(keyEntry.ttlSeconds)}</TableCell>
-                    <TableCell>{formatSize(keyEntry.size)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDeleteClick(keyEntry.key)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                      <p className="text-sm text-muted-foreground mt-2">Loading keys...</p>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No keys found matching the pattern "{searchPattern}".
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
+                ) : keys && keys.length > 0 ? (
+                  keys.map((keyEntry) => (
+                    <TableRow key={keyEntry.key}>
+                      <TableCell className="font-mono text-xs max-w-xs truncate">{keyEntry.key}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{keyEntry.type}</Badge>
+                      </TableCell>
+                      <TableCell>{formatTtl(keyEntry.ttlSeconds)}</TableCell>
+                      <TableCell>{formatSize(keyEntry.size)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleViewClick(keyEntry.key)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeleteClick(keyEntry.key)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No keys found matching the pattern "{searchPattern}".
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -208,6 +229,12 @@ export const RedisKeyTable = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+      
+      <RedisKeyValueDialog
+        open={isViewDialogOpen}
+        onOpenChange={setIsViewDialogOpen}
+        keyName={keyToView}
+      />
+    </>
   );
 };

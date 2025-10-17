@@ -67,6 +67,27 @@ namespace WatchTower.API.Controllers
             return Ok(filteredKeys);
         }
 
+        [HttpGet("key/{key}/value")]
+        public ActionResult<string> GetKeyValue(string key)
+        {
+            var keyToDecode = System.Uri.UnescapeDataString(key);
+
+            if (keyToDecode.Contains("session"))
+            {
+                return Ok("{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\",\"expiry\":\"2024-12-31T23:59:59Z\"}");
+            }
+            if (keyToDecode.Contains("fund"))
+            {
+                return Ok("[\"AAPL\", \"MSFT\", \"GOOGL\", \"TSLA\", \"AMZN\"]");
+            }
+            if (keyToDecode.Contains("queue"))
+            {
+                return Ok("[\"migration_job_1\", \"migration_job_2\", \"migration_job_3\"]");
+            }
+            
+            return Ok($"Mock value for key: {keyToDecode}. Type: {MockKeys.FirstOrDefault(k => k.Key == keyToDecode)?.Type ?? "string"}");
+        }
+
         [HttpDelete("key/{key}")]
         public async Task<IActionResult> DeleteKey(string key)
         {
