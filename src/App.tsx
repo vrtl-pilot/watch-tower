@@ -13,6 +13,7 @@ import Servers from "./pages/Servers";
 import Requests from "./pages/Requests";
 import MigrationDecoder from "./pages/MigrationDecoder";
 import JsonFormatter from "./pages/JsonFormatter";
+import Settings from "./pages/Settings";
 import { useMigrationStore } from "./hooks/use-migration-store";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/fund-eligibility" element={<FundEligibility />} />
               <Route path="/servers" element={<Servers />} />
               <Route path="/requests" element={<Requests />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
