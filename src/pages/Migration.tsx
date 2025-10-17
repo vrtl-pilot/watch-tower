@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Trash2, Pencil, Check, Ban, Search } from "lucide-react";
+import { X, Trash2, Pencil, Check, Ban, Search, Loader2 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -57,6 +57,7 @@ const Migration = () => {
   const [editFormData, setEditFormData] = useState<Partial<MigrationItem>>({});
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [enqueuedIds, setEnqueuedIds] = useState<number[]>([]);
+  const [isEnqueuing, setIsEnqueuing] = useState(false);
 
   const handleSetStartDate = (date: Date | undefined) => {
     setStartDate(date);
@@ -151,11 +152,37 @@ const Migration = () => {
     showSuccess("Migration item updated successfully.");
   };
 
-  const handleEnqueue = () => {
-    const newItemsToEnqueue = migrations.filter(item => !enqueuedIds.includes(item.id));
-    if (newItemsToEnqueue.length > 0) {
-      setEnqueuedIds(prev => [...prev, ...newItemsToEnqueue.map(item => item.id)]);
-      showSuccess(`${newItemsToEnqueue.length} new migration(s) have been enqueued.`);
+  const handleEnqueue = async () => {
+    const itemsToEnqueue = migrations.filter(item => !enqueuedIds.includes(item.id));
+    if (itemsToEnqueue.length === 0) {
+      return;
+    }
+
+    setIsEnqueuing(true);
+
+    try {
+      const response = await fetch('/api/migration/enqueue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(itemsToEnqueue),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to enqueue migrations.');
+      }
+
+      const result = await response.json();
+      
+      setEnqueuedIds(prev => [...prev, ...itemsToEnqueue.map(item => item.id)]);
+      showSuccess(result.message || `${itemsToEnqueue.length} migration(s) have been enqueued.`);
+
+    } catch (error) {
+      console.error("Error enqueuing migrations:", error);
+      showError("An error occurred while enqueuing migrations.");
+    } finally {
+      setIsEnqueuing(false);
     }
   };
 
@@ -301,7 +328,8 @@ const Migration = () => {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleEnqueue} disabled={unEnqueuedItems.length === 0}>
+                <Button onClick={handleEnqueue} disabled={unEnqueuedItems.length === 0 || isEnqueuing}>
+                  {isEnqueuing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Enqueue
                 </Button>
               </div>
@@ -423,7 +451,7 @@ const Migration = () => {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will clear the entire migration queue. This action cannot be undone.
-            </AlertDialogDescription>
+            </Description>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Go back</AlertDialogCancel>
