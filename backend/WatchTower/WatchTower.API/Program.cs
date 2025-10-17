@@ -1,23 +1,12 @@
+using WatchTower.API.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
 // Add services to the container.
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("http://localhost:8080")
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
-                      });
-});
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR(); // Add SignalR services
 
 var app = builder.Build();
 
@@ -30,10 +19,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseRouting();
 
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<MigrationHub>("/migrationhub"); // Map the hub to its endpoint
 
 app.Run();
