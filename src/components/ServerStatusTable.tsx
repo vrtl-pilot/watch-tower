@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Play, Power, RefreshCw, StopCircle } from "lucide-react";
 import { showSuccess } from "@/utils/toast";
@@ -135,45 +136,55 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
               <TableCell>{item.service}</TableCell>
               <TableCell><StatusBadge status={item.serverStatus} /></TableCell>
               <TableCell><StatusBadge status={item.serviceStatus} /></TableCell>
-              <TableCell className="text-right space-x-1">
-                {/* Server Actions */}
-                {item.serverStatus === "Stopped" ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startServer")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
-                    <TooltipContent><p>Start Server</p></TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <>
-                    <Tooltip>
-                      <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopServer")}><Power className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
-                      <TooltipContent><p>Shutdown Server</p></TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartServer")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
-                      <TooltipContent><p>Restart Server</p></TooltipContent>
-                    </Tooltip>
-                  </>
-                )}
-                {/* Service Actions */}
-                {item.serverStatus === "Running" && (
-                  item.serviceStatus === "Stopped" ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startService")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
-                      <TooltipContent><p>Start Service</p></TooltipContent>
-                    </Tooltip>
-                  ) : (
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                  {/* Server Actions */}
+                  <div className="flex items-center gap-1">
+                    {item.serverStatus === "Stopped" ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startServer")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
+                        <TooltipContent><p>Start Server</p></TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopServer")}><Power className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                          <TooltipContent><p>Shutdown Server</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartServer")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
+                          <TooltipContent><p>Restart Server</p></TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Service Actions */}
+                  {item.serverStatus === "Running" && (
                     <>
-                      <Tooltip>
-                        <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopService")}><StopCircle className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
-                        <TooltipContent><p>Stop Service</p></TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartService")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
-                        <TooltipContent><p>Restart Service</p></TooltipContent>
-                      </Tooltip>
+                      <Separator orientation="vertical" className="h-6 mx-2" />
+                      <div className="flex items-center gap-1">
+                        {item.serviceStatus === "Stopped" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startService")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
+                            <TooltipContent><p>Start Service</p></TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <>
+                            <Tooltip>
+                              <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopService")}><StopCircle className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                              <TooltipContent><p>Stop Service</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartService")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
+                              <TooltipContent><p>Restart Service</p></TooltipContent>
+                            </Tooltip>
+                          </>
+                        )}
+                      </div>
                     </>
-                  )
-                )}
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}
