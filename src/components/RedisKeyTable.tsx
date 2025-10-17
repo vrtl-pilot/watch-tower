@@ -64,13 +64,9 @@ const formatSize = (size: number) => {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-// Note: The current mock API only filters by pattern. We fetch and then filter by type on the frontend.
 const fetchKeys = async (pattern: string, environment: string): Promise<RedisKeyEntry[]> => {
-  // In a real app, we would pass the environment to the API: 
-  // const response = await fetch(`/api/redis/keys?env=${environment}&pattern=${encodeURIComponent(pattern)}&limit=50`); 
+  const response = await fetch(`/api/redis/keys?environment=${environment}&pattern=${encodeURIComponent(pattern)}&limit=50`); 
   
-  // Using mock endpoint for now
-  const response = await fetch(`/api/redis/keys?pattern=${encodeURIComponent(pattern)}&limit=50`); 
   if (!response.ok) {
     throw new Error("Failed to fetch Redis keys.");
   }
@@ -102,9 +98,7 @@ export const RedisKeyTable = ({ environment }: RedisKeyTableProps) => {
   const deleteMutation = useMutation({
     mutationFn: async ({ key }: DeleteKeyRequest) => {
       const encodedKey = encodeURIComponent(key);
-      // In a real app, we would pass the environment to the API: 
-      // const response = await fetch(`/api/redis/key/${encodedKey}?env=${environment}`, {
-      const response = await fetch(`/api/redis/key/${encodedKey}`, {
+      const response = await fetch(`/api/redis/key/${encodedKey}?environment=${environment}`, {
         method: 'DELETE',
       });
       if (!response.ok && response.status !== 202) {
@@ -271,6 +265,7 @@ export const RedisKeyTable = ({ environment }: RedisKeyTableProps) => {
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
         keyName={keyToView}
+        environment={environment}
       />
     </>
   );

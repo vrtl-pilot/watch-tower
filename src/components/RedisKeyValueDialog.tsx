@@ -21,11 +21,9 @@ interface RedisKeyValueDialogProps {
 
 const fetchKeyValue = async (key: string, environment: string): Promise<string> => {
   const encodedKey = encodeURIComponent(key);
-  // In a real app, we would pass the environment to the API: 
-  // const response = await fetch(`/api/redis/key/${encodedKey}/value?env=${environment}`);
+  // Now correctly passing the environment parameter
+  const response = await fetch(`/api/redis/key/${encodedKey}/value?environment=${environment}`);
   
-  // Using mock endpoint for now
-  const response = await fetch(`/api/redis/key/${encodedKey}/value`);
   if (!response.ok) {
     throw new Error("Failed to fetch key value.");
   }
