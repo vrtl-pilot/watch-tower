@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { RequestChart } from "@/components/RequestChart";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,13 +9,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowUpRight } from "lucide-react";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 const Requests = () => {
+  const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Requests</h2>
         <div className="flex items-center space-x-2">
+          <Select value={environment} onValueChange={setEnvironment}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Environment" />
+            </SelectTrigger>
+            <SelectContent>
+              {ENVIRONMENTS.map(env => (
+                <SelectItem key={env} value={env.toLowerCase()}>{env}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select defaultValue="last_60_mins">
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time range" />

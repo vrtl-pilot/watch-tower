@@ -13,7 +13,7 @@ import { RequestStagesChart } from "@/components/RequestStagesChart";
 import { EndpointBarChart } from "@/components/EndpointBarChart";
 import { ServerStatusSummary } from "@/components/ServerStatusSummary";
 import { showError } from "@/utils/toast";
-import { ENVIRONMENTS } from "@/lib/constants";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 interface ServerItem {
   id: string;
@@ -42,6 +42,7 @@ const topEndpointsByRequestData = [
 ];
 
 const Dashboard = () => {
+  const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
   const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
   const [workerData, setWorkerData] = useState<ServerItem[]>([]);
   const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
@@ -81,7 +82,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <Select>
+          <Select value={environment} onValueChange={setEnvironment}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Environment" />
             </SelectTrigger>
