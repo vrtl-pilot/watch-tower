@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { toast } from 'sonner'; // Import sonner toast for dismissal
+import { useNotificationStore } from './use-notification-store'; // Import the notification store
 
 export interface MigrationItem {
   id: number;
@@ -92,20 +93,28 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     newConnection.on("ReceiveServerStatusUpdate", (server: Server) => {
       const { activeServerActions, removeServerActionToast } = get();
       const toastId = activeServerActions[server.id];
+      const addNotification = useNotificationStore.getState().addNotification; // Get current state function
 
       if (toastId) {
         // 1. Dismiss the loading toast
         toast.dismiss(toastId);
         removeServerActionToast(server.id);
 
-        // 2. Show success notification
+        // 2. Prepare messages
         const successMessage = `${server.service} on ${server.serverName} successfully updated. Status: ${server.serverStatus}/${server.serviceStatus}.`;
+        
+        // 3. Show ephemeral toast notification
         toast.success("Server Action Complete", { description: successMessage });
+
+        // 4. Add persistent notification to the bell icon
+        addNotification({
+          title: "Server Status Update",
+          description: successMessage,
+          path: "/servers",
+        });
       }
       
-      // Note: The Servers.tsx page will handle updating its local state based on this SignalR message
-      // by refetching or updating state directly if we were using a global server state store.
-      // For now, we rely on the Servers page's local state update mechanism.
+      // Note: The Servers.tsx page handles updating its local state based on this SignalR message
     });
 
     newConnection.start()
