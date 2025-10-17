@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { HubConnectionBuilder, HubConnection } from "@microsoft/signalr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,61 +27,46 @@ import {
 import { showSuccess, showError } from "@/utils/toast";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { cn } from "@/lib/utils";
-
-interface MigrationItem {
-  id: number;
-  fundName: string;
-  dateType: "historical" | "oneDay" | "range";
-  date?: Date;
-  startDate?: Date;
-  endDate?: Date;
-  env: string;
-}
+import { useMigrationStore, MigrationItem } from "@/hooks/use-migration-store";
 
 const Migration = () => {
-  const [migrations, setMigrations] = useState<MigrationItem[]>([
-    { id: 1, fundName: "Sample Fund A", dateType: "oneDay", date: new Date(), env: "prod" },
-    { id: 2, fundName: "Sample Fund B", dateType: "range", startDate: new Date(), endDate: new Date(new Date().setDate(new Date().getDate() + 7)), env: "prod" },
-  ]);
+  const {
+    migrations,
+    selectedItems,
+    enqueuedIds,
+    logMessages,
+    initializeConnection,
+    addMigration,
+    removeMigrations,
+    updateMigration,
+    toggleSelection,
+    selectAll,
+    deselectAll,
+    setEnqueued,
+    clearQueue,
+  } = useMigrationStore();
+
+  // Local state for UI controls
   const [newFundName, setNewFundName] = useState("");
   const [dateType, setDateType] = useState<"historical" | "oneDay" | "range">("oneDay");
   const [newDate, setNewDate] = useState<Date | undefined>(new Date());
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
 
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<MigrationItem>>({});
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
-  const [enqueuedIds, setEnqueuedIds] = useState<number[]>([]);
   const [isEnqueuing, setIsEnqueuing] = useState(false);
-  const [logMessages, setLogMessages] = useState<string[]>([]);
   const logScrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const connection: HubConnection = new HubConnectionBuilder()
-      .withUrl("/migrationhub")
-      .withAutomaticReconnect()
-      .build();
-
-    connection.start().then(() => {
-      setLogMessages(prev => [...prev, "[INFO] SignalR Connected."]);
-    }).catch(err => console.error("SignalR Connection Error: ", err));
-
-    connection.on("ReceiveLogMessage", (message) => {
-      setLogMessages(prev => [...prev, message]);
-    });
-
-    return () => {
-      connection.stop();
-    };
-  }, []);
+    initializeConnection();
+  }, [initializeConnection]);
 
   useEffect(() => {
-    // Auto-scroll to the bottom of the log
     if (logScrollAreaRef.current) {
       const scrollViewport = logScrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
       if (scrollViewport) {
@@ -112,7 +96,7 @@ const Migration = () => {
       dateInfo.startDate = startDate;
       dateInfo.endDate = endDate;
     } else if (dateType !== "historical") {
-      return; // Invalid date state
+      return;
     }
 
     const newItem: MigrationItem = {
@@ -122,7 +106,7 @@ const Migration = () => {
       ...dateInfo,
     } as MigrationItem;
 
-    setMigrations([...migrations, newItem]);
+    addMigration(newItem);
     setNewFundName("");
     setDateType("oneDay");
     setNewDate(new Date());
@@ -134,34 +118,32 @@ const Migration = () => {
   };
 
   const handleConfirmDelete = () => {
-    let deletedCount = 0;
+    let idsToDelete: number[] = [];
     if (itemToDelete === "bulk") {
-      deletedCount = selectedItems.length;
-      setMigrations(migrations.filter((item) => !selectedItems.includes(item.id)));
-      setSelectedItems([]);
+      idsToDelete = selectedItems;
     } else if (itemToDelete !== null) {
-      deletedCount = 1;
-      setMigrations(migrations.filter((item) => item.id !== itemToDelete));
+      idsToDelete = [itemToDelete];
     }
+    
+    if (idsToDelete.length > 0) {
+      removeMigrations(idsToDelete);
+      showSuccess(`Successfully deleted ${idsToDelete.length} migration(s).`);
+    }
+    
     setIsDeleteDialogOpen(false);
     setItemToDelete(null);
-    if (deletedCount > 0) {
-      showSuccess(`Successfully deleted ${deletedCount} migration(s).`);
-    }
   };
 
   const handleSelect = (id: number) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
-    );
+    toggleSelection(id);
   };
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     const unEnqueuedIds = migrations.filter(item => !enqueuedIds.includes(item.id)).map(item => item.id);
     if (checked === true) {
-      setSelectedItems(unEnqueuedIds);
+      selectAll(unEnqueuedIds);
     } else {
-      setSelectedItems([]);
+      deselectAll();
     }
   };
 
@@ -175,11 +157,7 @@ const Migration = () => {
   };
 
   const handleSaveEdit = (id: number) => {
-    setMigrations(
-      migrations.map((item) =>
-        item.id === id ? { ...item, ...editFormData } as MigrationItem : item
-      )
-    );
+    updateMigration(id, editFormData);
     setEditingId(null);
     showSuccess("Migration item updated successfully.");
   };
@@ -207,7 +185,7 @@ const Migration = () => {
 
       const result = await response.json();
       
-      setEnqueuedIds(prev => [...prev, ...itemsToEnqueue.map(item => item.id)]);
+      setEnqueued(itemsToEnqueue.map(item => item.id));
       showSuccess(result.message || `${itemsToEnqueue.length} migration(s) have been enqueued.`);
 
     } catch (error) {
@@ -219,9 +197,7 @@ const Migration = () => {
   };
 
   const handleConfirmCancel = () => {
-    setMigrations([]);
-    setSelectedItems([]);
-    setEnqueuedIds([]);
+    clearQueue();
     setIsCancelDialogOpen(false);
     showSuccess("Migration queue has been cleared.");
   };
@@ -239,9 +215,9 @@ const Migration = () => {
       case "historical":
         return "Historical";
       case "oneDay":
-        return item.date ? item.date.toLocaleDateString() : "N/A";
+        return item.date ? new Date(item.date).toLocaleDateString() : "N/A";
       case "range":
-        return `${item.startDate ? item.startDate.toLocaleDateString() : "N/A"} - ${item.endDate ? item.endDate.toLocaleDateString() : "N/A"}`;
+        return `${item.startDate ? new Date(item.startDate).toLocaleDateString() : "N/A"} - ${item.endDate ? new Date(item.endDate).toLocaleDateString() : "N/A"}`;
       default:
         return "N/A";
     }
