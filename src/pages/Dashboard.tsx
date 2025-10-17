@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { StatCard } from "@/components/StatCard";
-import { RequestChart } from "@/components/RequestChart";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -9,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Activity, AlertTriangle, CheckCircle, ArrowUpRight } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle } from "lucide-react";
 import { WorkerQueueInfo } from "@/components/WorkerQueueInfo";
 import { RequestStagesChart } from "@/components/RequestStagesChart";
 import { EndpointBarChart } from "@/components/EndpointBarChart";
@@ -90,20 +88,6 @@ const Dashboard = () => {
               <SelectItem value="dev">Development</SelectItem>
             </SelectContent>
           </Select>
-          <Select defaultValue="last_60_mins">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last_15_mins">Last 15 Mins</SelectItem>
-              <SelectItem value="last_60_mins">Last 60 Mins</SelectItem>
-              <SelectItem value="last_24_hours">Last 24 Hours</SelectItem>
-              <SelectItem value="last_7_days">Last 7 Days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button>
-            <ArrowUpRight className="mr-2 h-4 w-4" /> Export
-          </Button>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -136,7 +120,6 @@ const Dashboard = () => {
             <RequestStagesChart />
           </div>
           <div className="grid grid-cols-1 gap-4">
-            <RequestChart />
             <div className="grid gap-4 md:grid-cols-2">
               <EndpointBarChart
                 title="🚨 Top Errors by Description"
