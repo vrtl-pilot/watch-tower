@@ -55,7 +55,7 @@ const menuItems = [
     icon: Code,
   },
   {
-    label: "Stat JSON",
+    label: "JSON Formatter", // Updated label
     href: "/stat-json",
     icon: FileJson,
   },
