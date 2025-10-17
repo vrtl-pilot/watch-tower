@@ -35,7 +35,6 @@ const Migration = () => {
     selectedItems,
     enqueuedIds,
     logMessages,
-    initializeConnection,
     addMigration,
     removeMigrations,
     updateMigration,
@@ -61,10 +60,6 @@ const Migration = () => {
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [isEnqueuing, setIsEnqueuing] = useState(false);
   const logScrollAreaRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    initializeConnection();
-  }, [initializeConnection]);
 
   useEffect(() => {
     if (logScrollAreaRef.current) {

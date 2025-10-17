@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,30 +11,39 @@ import FundEligibility from "./pages/FundEligibility";
 import NotFound from "./pages/NotFound";
 import Servers from "./pages/Servers";
 import Requests from "./pages/Requests";
+import { useMigrationStore } from "./hooks/use-migration-store";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="top-right" />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/migration" element={<Migration />} />
-            <Route path="/fund-eligibility" element={<FundEligibility />} />
-            <Route path="/servers" element={<Servers />} />
-            <Route path="/requests" element={<Requests />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const { initializeConnection } = useMigrationStore();
+
+  useEffect(() => {
+    initializeConnection();
+  }, [initializeConnection]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-right" />
+        <BrowserRouter>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/migration" element={<Migration />} />
+              <Route path="/fund-eligibility" element={<FundEligibility />} />
+              <Route path="/servers" element={<Servers />} />
+              <Route path="/requests" element={<Requests />} />
+            </Route>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

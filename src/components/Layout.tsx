@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import { MigrationLogHandler } from "./MigrationLogHandler";
 
 const Layout = () => {
   return (
@@ -16,6 +17,7 @@ const Layout = () => {
           <MadeWithDyad />
         </footer>
       </div>
+      <MigrationLogHandler />
     </div>
   );
 };
