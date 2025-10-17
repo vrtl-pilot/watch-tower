@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Migration from "./pages/Migration";
 import FundEligibility from "./pages/FundEligibility";
 import NotFound from "./pages/NotFound";
+import Servers from "./pages/Servers";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/migration" element={<Migration />} />
             <Route path="/fund-eligibility" element={<FundEligibility />} />
+            <Route path="/servers" element={<Servers />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
