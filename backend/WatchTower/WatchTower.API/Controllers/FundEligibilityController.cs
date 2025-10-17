@@ -1,39 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
-using WatchTower.API.Models;
+using WatchTower.Shared.Models;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace WatchTower.API.Controllers
+namespace WatchTower.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class FundEligibilityController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class FundEligibilityController : ControllerBase
+    [HttpPost("check")]
+    public ActionResult<FundEligibilityResult> CheckEligibility([FromBody] FundEligibilityRequest request)
     {
-        [HttpPost("check")]
-        public ActionResult<FundEligibilityResult> CheckEligibility([FromBody] FundEligibilityRequest request)
+        // Simulate eligibility check
+        var criteria = new List<Criterion>
         {
-            if (string.IsNullOrEmpty(request.FundName))
-            {
-                return BadRequest("FundName is required.");
-            }
+            new() { Name = "Minimum Investment", Met = true },
+            new() { Name = "Accredited Investor", Met = !(request.FundName?.Contains("Retail") ?? false), Reason = (request.FundName?.Contains("Retail") ?? false) ? "Retail fund selected, accredited status required" : null },
+            new() { Name = "Geographic Region", Met = true },
+            new() { Name = "Fund is Open", Met = !(request.FundName?.Contains("Closed") ?? false), Reason = (request.FundName?.Contains("Closed") ?? false) ? "This fund is closed to new investors." : null }
+        };
 
-            bool isEligible = request.FundName.Contains("Tech") || request.FundName.Contains("Blue");
-            string status = isEligible ? "Eligible" : "Ineligible";
+        var isEligible = criteria.All(c => c.Met);
 
-            var result = new FundEligibilityResult
-            {
-                FundName = request.FundName,
-                Status = status,
-                Criteria = new List<Criterion>
-                {
-                    new Criterion { Name = "Minimum AUM requirement met", Met = true },
-                    new Criterion { Name = "Geographic restrictions satisfied", Met = isEligible },
-                    new Criterion { Name = "Sector exposure limits adhered to", Met = true },
-                    new Criterion { Name = $"Regulatory compliance check (Env: {request.Environment})", Met = isEligible, Reason = isEligible ? null : $"Failed compliance check in {request.Environment} environment." },
-                    new Criterion { Name = "Historical performance benchmark (5Y)", Met = !isEligible, Reason = !isEligible ? "Benchmark not met over 5 years." : null },
-                }
-            };
+        var result = new FundEligibilityResult
+        {
+            FundName = request.FundName,
+            Status = isEligible ? "Eligible" : "Ineligible",
+            Criteria = criteria
+        };
 
-            return Ok(result);
-        }
+        return Ok(result);
     }
 }

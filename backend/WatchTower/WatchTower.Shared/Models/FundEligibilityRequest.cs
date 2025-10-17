@@ -1,0 +1,7 @@
+namespace WatchTower.Shared.Models;
+
+public class FundEligibilityRequest
+{
+    public string? FundName { get; set; }
+    public string? Environment { get; set; }
+}

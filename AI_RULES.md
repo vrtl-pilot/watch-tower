@@ -11,6 +11,9 @@
 - ALWAYS try to use the shadcn/ui library.
 - Tailwind CSS: always use Tailwind CSS for styling components. Utilize Tailwind classes extensively for layout, spacing, colors, and other design aspects.
 
+- You know very well about C#
+- If user asks any changes in C# code, follow the user prompt and do it
+
 Available packages and libraries:
 
 - The lucide-react package is installed for icons.
