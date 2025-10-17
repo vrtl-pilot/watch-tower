@@ -77,51 +77,55 @@ const Dashboard = () => {
           </Button>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Total Requests"
-          value="1,204,395"
-          icon={Activity}
-          change="+5.2%"
-          changeType="increase"
-        />
-        <StatCard
-          title="Success Rate"
-          value="98.55%"
-          icon={CheckCircle}
-          change="-0.8%"
-          changeType="decrease"
-        />
-        <StatCard
-          title="Error Rate"
-          value="1.45%"
-          icon={AlertTriangle}
-          change="+0.8%"
-          changeType="increase"
-        />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <ServerStatusSummary title="Web API Status" data={webApiData} />
-        <ServerStatusSummary title="Worker Status" data={workerData} />
-        <ServerStatusSummary title="Lighthouse Status" data={lighthouseData} />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <WorkerQueueInfo />
-        <RequestStagesChart />
-      </div>
-      <div className="grid grid-cols-1 gap-4">
-        <RequestChart />
-        <div className="grid gap-4 md:grid-cols-2">
-          <EndpointBarChart
-            title="🚨 Top Errors by Description"
-            description="The most common error messages."
-            data={topErrorsByDescriptionData}
-          />
-          <EndpointBarChart
-            title="🚀 Top Endpoints by Request Count"
-            description="The most frequently accessed endpoints."
-            data={topEndpointsByRequestData}
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-3 space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <StatCard
+              title="Total Requests"
+              value="1,204,395"
+              icon={Activity}
+              change="+5.2%"
+              changeType="increase"
+            />
+            <StatCard
+              title="Success Rate"
+              value="98.55%"
+              icon={CheckCircle}
+              change="-0.8%"
+              changeType="decrease"
+            />
+            <StatCard
+              title="Error Rate"
+              value="1.45%"
+              icon={AlertTriangle}
+              change="+0.8%"
+              changeType="increase"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <WorkerQueueInfo />
+            <RequestStagesChart />
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <RequestChart />
+            <div className="grid gap-4 md:grid-cols-2">
+              <EndpointBarChart
+                title="🚨 Top Errors by Description"
+                description="The most common error messages."
+                data={topErrorsByDescriptionData}
+              />
+              <EndpointBarChart
+                title="🚀 Top Endpoints by Request Count"
+                description="The most frequently accessed endpoints."
+                data={topEndpointsByRequestData}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="lg:col-span-1 space-y-4">
+          <ServerStatusSummary title="Web API Status" data={webApiData} />
+          <ServerStatusSummary title="Worker Status" data={workerData} />
+          <ServerStatusSummary title="Lighthouse Status" data={lighthouseData} />
         </div>
       </div>
     </div>
