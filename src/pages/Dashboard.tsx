@@ -12,6 +12,22 @@ import { Activity, AlertTriangle, CheckCircle, ArrowUpRight } from "lucide-react
 import { WorkerQueueInfo } from "@/components/WorkerQueueInfo";
 import { RequestStagesChart } from "@/components/RequestStagesChart";
 import { EndpointBarChart } from "@/components/EndpointBarChart";
+import { ServerStatusSummary } from "@/components/ServerStatusSummary";
+
+const webApiData = [
+  { id: "web-1", server: "prod-web-01", service: "User Service", serverStatus: "Running" as const, serviceStatus: "Running" as const },
+  { id: "web-2", server: "prod-web-02", service: "Order Service", serverStatus: "Running" as const, serviceStatus: "Down" as const },
+  { id: "web-3", server: "prod-web-03", service: "Product Service", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
+];
+
+const workerData = [
+    { id: "work-1", server: "prod-worker-01", service: "Data Processing", serverStatus: "Running" as const, serviceStatus: "Running" as const },
+    { id: "work-2", server: "prod-worker-02", service: "Email Notifications", serverStatus: "Running" as const, serviceStatus: "Running" as const },
+];
+
+const lighthouseData = [
+    { id: "lh-1", server: "prod-lh-01", service: "Metrics & Logging", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
+];
 
 const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
@@ -73,6 +89,11 @@ const Dashboard = () => {
           change="+0.8%"
           changeType="increase"
         />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <ServerStatusSummary title="Web API Status" data={webApiData} />
+        <ServerStatusSummary title="Worker Status" data={workerData} />
+        <ServerStatusSummary title="Lighthouse Status" data={lighthouseData} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <WorkerQueueInfo />
