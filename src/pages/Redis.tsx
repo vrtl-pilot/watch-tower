@@ -4,6 +4,7 @@ import { showError } from "@/utils/toast";
 import { RedisStatusCard } from "@/components/RedisStatusCard";
 import { RedisMemoryChart } from "@/components/RedisMemoryChart";
 import { RedisLatencyChart } from "@/components/RedisLatencyChart";
+import { RedisKeyTable } from "@/components/RedisKeyTable";
 import { Loader2 } from "lucide-react";
 
 interface RedisInfo {
@@ -98,16 +99,7 @@ const Redis = () => {
         <RedisLatencyChart data={latencyData} />
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Key Management & Diagnostics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Key inspection, slow log analysis, and operational controls coming soon.
-          </p>
-        </CardContent>
-      </Card>
+      <RedisKeyTable />
     </div>
   );
 };

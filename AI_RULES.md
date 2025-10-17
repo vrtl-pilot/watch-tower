@@ -13,6 +13,7 @@
 
 - You know very well about C#
 - If user asks any changes in C# code, follow the user prompt and do it
+- If keep all common models in shared library
 
 Available packages and libraries:
 

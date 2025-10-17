@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using WatchTower.Shared.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace WatchTower.API.Controllers
 {
@@ -9,6 +10,16 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class RedisController : ControllerBase
     {
+        private static readonly List<RedisKeyEntry> MockKeys = new List<RedisKeyEntry>
+        {
+            new RedisKeyEntry { Key = "user:session:12345", Type = "string", TtlSeconds = 3600, Size = 128 },
+            new RedisKeyEntry { Key = "cache:fund:global_tech", Type = "hash", TtlSeconds = 600, Size = 4096 },
+            new RedisKeyEntry { Key = "queue:migrations", Type = "list", TtlSeconds = -1, Size = 50 },
+            new RedisKeyEntry { Key = "leaderboard:daily", Type = "zset", TtlSeconds = 86400, Size = 1000 },
+            new RedisKeyEntry { Key = "config:feature_flags", Type = "string", TtlSeconds = -1, Size = 500 },
+            new RedisKeyEntry { Key = "user:profile:9876", Type = "hash", TtlSeconds = 7200, Size = 2048 },
+        };
+
         [HttpGet("info")]
         public ActionResult<RedisInfo> GetRedisInfo()
         {
@@ -18,7 +29,7 @@ namespace WatchTower.API.Controllers
                 Status = "Running",
                 Uptime = "12 days, 4 hours",
                 ConnectedClients = 5,
-                TotalKeys = 150000,
+                TotalKeys = MockKeys.Count + 100000, // Simulate more keys than shown
                 PersistenceStatus = "OK",
                 HitRatio = 0.95,
                 UsedMemoryBytes = 1073741824, // 1 GB
@@ -42,6 +53,36 @@ namespace WatchTower.API.Controllers
                 new RedisLatencyData { Time = "10:30", LatencyMs = 2 },
             };
             return Ok(data);
+        }
+
+        [HttpGet("keys")]
+        public ActionResult<IEnumerable<RedisKeyEntry>> GetKeys([FromQuery] string pattern = "*", [FromQuery] int limit = 10)
+        {
+            // Mock implementation for key search/pagination
+            var filteredKeys = MockKeys
+                .Where(k => k.Key.Contains(pattern, System.StringComparison.OrdinalIgnoreCase) || pattern == "*")
+                .Take(limit)
+                .ToList();
+            
+            return Ok(filteredKeys);
+        }
+
+        [HttpDelete("key/{key}")]
+        public async Task<IActionResult> DeleteKey(string key)
+        {
+            // Simulate asynchronous deletion process
+            await Task.Delay(500); 
+            
+            var keyToDecode = System.Uri.UnescapeDataString(key);
+
+            var index = MockKeys.FindIndex(k => k.Key == keyToDecode);
+            if (index != -1)
+            {
+                MockKeys.RemoveAt(index);
+                return Accepted(new { message = $"Deletion of key '{keyToDecode}' initiated." });
+            }
+
+            return NotFound(new { message = $"Key '{keyToDecode}' not found." });
         }
     }
 }
