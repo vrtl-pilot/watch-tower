@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import Sidebar from './Sidebar';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from './NotificationBell';
 
 const Navbar = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -47,8 +48,11 @@ const Navbar = () => {
             </h1>
           </div>
         </div>
-        <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
-          {formatTime(currentTime)}
+        <div className="flex items-center gap-2">
+          <div className="text-lg font-medium text-gray-700 dark:text-gray-200">
+            {formatTime(currentTime)}
+          </div>
+          <NotificationBell />
         </div>
       </div>
     </header>

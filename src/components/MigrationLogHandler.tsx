@@ -1,27 +1,33 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useMigrationStore } from '@/hooks/use-migration-store';
-import { toast } from 'sonner';
+import { useNotificationStore } from '@/hooks/use-notification-store';
 
 export const MigrationLogHandler = () => {
   const { logMessages } = useMigrationStore();
-  const location = useLocation();
-  const processedMessagesCount = useRef(logMessages.length);
+  const { addNotification } = useNotificationStore();
+  // Use a ref to track the number of messages we've already processed and created notifications for.
+  const processedCountRef = useRef(logMessages.length);
 
   useEffect(() => {
-    if (location.pathname !== '/migration') {
-      const newMessages = logMessages.slice(processedMessagesCount.current);
+    // Check if there are new messages since the last check.
+    if (logMessages.length > processedCountRef.current) {
+      const newMessages = logMessages.slice(processedCountRef.current);
+      
       newMessages.forEach(message => {
-        // Avoid showing toasts for initial connection status messages
+        // Avoid creating notifications for initial connection status messages
         if (!message.startsWith('[INFO] SignalR Connected') && !message.startsWith('[ERROR] SignalR Connection Failed')) {
-          toast.info("Migration Log", {
+          addNotification({
+            title: "Migration Log",
             description: message,
+            path: "/migration",
           });
         }
       });
+
+      // Update the ref to the new length so we don't process these messages again.
+      processedCountRef.current = logMessages.length;
     }
-    processedMessagesCount.current = logMessages.length;
-  }, [logMessages, location.pathname]);
+  }, [logMessages, addNotification]);
 
   return null; // This component does not render anything
 };

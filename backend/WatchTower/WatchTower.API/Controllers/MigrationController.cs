@@ -32,7 +32,7 @@ namespace WatchTower.API.Controllers
             foreach (var item in items)
             {
                 // Simulate processing delay for each item
-                await Task.Delay(250); 
+                await Task.Delay(1000); 
                 await _hubContext.Clients.All.SendAsync("ReceiveLogMessage", $"[INFO] Enqueuing migration for Fund: {item.FundName}...");
             }
 
