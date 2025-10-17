@@ -33,11 +33,9 @@ interface LatencyData {
 }
 
 const fetchRedisInfo = async (environment: string): Promise<RedisInfo> => {
-  // In a real app, we would pass the environment to the API: 
-  // const response = await fetch(`/api/redis/info?env=${environment}`);
+  // Now correctly passing the environment parameter
+  const response = await fetch(`/api/redis/info?environment=${environment}`);
   
-  // Using mock endpoint for now
-  const response = await fetch("/api/redis/info");
   if (!response.ok) {
     throw new Error("Failed to fetch Redis info.");
   }
@@ -45,11 +43,9 @@ const fetchRedisInfo = async (environment: string): Promise<RedisInfo> => {
 };
 
 const fetchLatencyData = async (environment: string): Promise<LatencyData[]> => {
-  // In a real app, we would pass the environment to the API: 
-  // const response = await fetch(`/api/redis/latency-data?env=${environment}`);
+  // Now correctly passing the environment parameter
+  const response = await fetch(`/api/redis/latency-data?environment=${environment}`);
   
-  // Using mock endpoint for now
-  const response = await fetch("/api/redis/latency-data");
   if (!response.ok) {
     throw new Error("Failed to fetch Redis latency data.");
   }
