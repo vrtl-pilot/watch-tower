@@ -96,7 +96,7 @@ const Settings = () => {
           
           {/* Template Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">JSON Template (Use <code className={cn("bg-muted p-1 rounded text-primary font-mono", isLoading && "opacity-50")}>{{PLACEHOLDER}}</code> as placeholder)</label>
+            <label className="text-sm font-medium">JSON Template (Use <code className={cn("bg-muted p-1 rounded text-primary font-mono", isLoading && "opacity-50")}>{PLACEHOLDER}</code> as placeholder)</label>
             <Textarea
               value={template}
               onChange={(e) => setTemplate(e.target.value)}
