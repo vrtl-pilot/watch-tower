@@ -10,9 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X } from "lucide-react";
+import { Search, X, Loader2 } from "lucide-react";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
-import { showSuccess } from "@/utils/toast";
+import { showSuccess, showError } from "@/utils/toast";
 import { EligibilityDisplay } from "@/components/EligibilityDisplay";
 
 interface EligibilityResult {
@@ -30,6 +30,7 @@ const FundEligibility = () => {
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
   const [environment, setEnvironment] = useState("prod");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectFund = (fundName: string) => {
     setSelectedFundName(fundName);
@@ -38,27 +39,34 @@ const FundEligibility = () => {
     showSuccess(`Fund selected: ${fundName}`);
   };
 
-  const handleCheckEligibility = () => {
+  const handleCheckEligibility = async () => {
     if (!selectedFundName) return;
 
-    // Dummy data generation based on fund name and environment
-    const isEligible = selectedFundName.includes("Tech") || selectedFundName.includes("Blue");
-    const status = isEligible ? 'Eligible' : 'Ineligible';
+    setIsLoading(true);
+    setEligibilityResult(null);
 
-    const dummyResult: EligibilityResult = {
-      fundName: selectedFundName,
-      status: status,
-      criteria: [
-        { name: "Minimum AUM requirement met", met: true },
-        { name: "Geographic restrictions satisfied", met: isEligible },
-        { name: "Sector exposure limits adhered to", met: true },
-        { name: `Regulatory compliance check (Env: ${environment})`, met: isEligible, reason: isEligible ? undefined : `Failed compliance check in ${environment} environment.` },
-        { name: "Historical performance benchmark (5Y)", met: !isEligible, reason: !isEligible ? "Benchmark not met over 5 years." : undefined },
-      ]
-    };
+    try {
+      const response = await fetch('/api/fundeligibility/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fundName: selectedFundName, environment }),
+      });
 
-    setEligibilityResult(dummyResult);
-    showSuccess(`Eligibility check completed for ${selectedFundName}. Status: ${status}`);
+      if (!response.ok) {
+        throw new Error('Failed to check eligibility.');
+      }
+
+      const result: EligibilityResult = await response.json();
+      setEligibilityResult(result);
+      showSuccess(`Eligibility check completed for ${result.fundName}. Status: ${result.status}`);
+    } catch (error) {
+      console.error("Error checking eligibility:", error);
+      showError("An error occurred while checking eligibility.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClear = () => {
@@ -113,7 +121,10 @@ const FundEligibility = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleCheckEligibility} disabled={!selectedFundName}>Check Eligibility</Button>
+              <Button onClick={handleCheckEligibility} disabled={!selectedFundName || isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Check Eligibility
+              </Button>
               <Button variant="outline" onClick={handleClear} disabled={!selectedFundName && !eligibilityResult}>
                 <X className="h-4 w-4 mr-2" /> Clear
               </Button>
@@ -129,7 +140,11 @@ const FundEligibility = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {eligibilityResult ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : eligibilityResult ? (
               <EligibilityDisplay result={eligibilityResult} />
             ) : (
               <div className="p-4 border border-dashed rounded-lg bg-muted/30 flex items-center justify-center h-64">
