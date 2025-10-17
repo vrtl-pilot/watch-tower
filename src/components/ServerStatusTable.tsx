@@ -30,7 +30,7 @@ interface ServerItem {
   server: string;
   service: string;
   serverStatus: "Running" | "Stopped";
-  serviceStatus: "Running" | "Stopped";
+  serviceStatus: "Running" | "Stopped" | "Down";
 }
 
 interface ServerStatusTableProps {
@@ -38,13 +38,13 @@ interface ServerStatusTableProps {
   onAction: (id: string, newStatus: Partial<ServerItem>) => void;
 }
 
-const StatusBadge = ({ status }: { status: string }) => (
+const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" }) => (
   <Badge
     className={cn(
       "text-white",
-      status === "Running"
-        ? "bg-green-600 hover:bg-green-600/80"
-        : "bg-red-600 hover:bg-red-600/80"
+      status === "Running" && "bg-green-600 hover:bg-green-600/80",
+      status === "Stopped" && "bg-red-600 hover:bg-red-600/80",
+      status === "Down" && "bg-yellow-500 hover:bg-yellow-500/80"
     )}
   >
     {status}
@@ -168,6 +168,11 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
                           <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startService")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
                             <TooltipContent><p>Start Service</p></TooltipContent>
+                          </Tooltip>
+                        ) : item.serviceStatus === "Down" ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartService")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
+                            <TooltipContent><p>Restart Service</p></TooltipContent>
                           </Tooltip>
                         ) : (
                           <>

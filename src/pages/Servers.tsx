@@ -14,12 +14,12 @@ interface ServerItem {
   server: string;
   service: string;
   serverStatus: "Running" | "Stopped";
-  serviceStatus: "Running" | "Stopped";
+  serviceStatus: "Running" | "Stopped" | "Down";
 }
 
 const initialWebApiData: ServerItem[] = [
   { id: "web-1", server: "prod-web-01", service: "User Service", serverStatus: "Running", serviceStatus: "Running" },
-  { id: "web-2", server: "prod-web-02", service: "Order Service", serverStatus: "Running", serviceStatus: "Stopped" },
+  { id: "web-2", server: "prod-web-02", service: "Order Service", serverStatus: "Running", serviceStatus: "Down" },
   { id: "web-3", server: "prod-web-03", service: "Product Service", serverStatus: "Stopped", serviceStatus: "Stopped" },
 ];
 
