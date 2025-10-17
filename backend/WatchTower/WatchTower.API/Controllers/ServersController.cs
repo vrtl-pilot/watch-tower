@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using WatchTower.API.Models;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace WatchTower.API.Controllers
 {
@@ -11,87 +9,89 @@ namespace WatchTower.API.Controllers
     {
         private static readonly List<Server> WebApiServers = new List<Server>
         {
-            new Server { Id = "web-1", ServerName = "prod-web-01", Service = "User Service", ServerStatus = "Running", ServiceStatus = "Running" },
-            new Server { Id = "web-2", ServerName = "prod-web-02", Service = "Order Service", ServerStatus = "Running", ServiceStatus = "Down" },
-            new Server { Id = "web-3", ServerName = "prod-web-03", Service = "Product Service", ServerStatus = "Stopped", ServiceStatus = "Stopped" },
+            new Server { Id = "webapi-01", ServerName = "WEBAPI-01", Service = "Web API", ServerStatus = "Running", ServiceStatus = "Running" },
+            new Server { Id = "webapi-02", ServerName = "WEBAPI-02", Service = "Web API", ServerStatus = "Running", ServiceStatus = "Running" },
+            new Server { Id = "webapi-03", ServerName = "WEBAPI-03", Service = "Web API", ServerStatus = "Stopped", ServiceStatus = "Stopped" }
         };
 
         private static readonly List<Server> WorkerServers = new List<Server>
         {
-            new Server { Id = "work-1", ServerName = "prod-worker-01", Service = "Data Processing", ServerStatus = "Running", ServiceStatus = "Running" },
-            new Server { Id = "work-2", ServerName = "prod-worker-02", Service = "Email Notifications", ServerStatus = "Running", ServiceStatus = "Running" },
+            new Server { Id = "worker-01", ServerName = "WORKER-01", Service = "Worker Service", ServerStatus = "Running", ServiceStatus = "Running" },
+            new Server { Id = "worker-02", ServerName = "WORKER-02", Service = "Worker Service", ServerStatus = "Running", ServiceStatus = "Down" },
+            new Server { Id = "worker-03", ServerName = "WORKER-03", Service = "Worker Service", ServerStatus = "Running", ServiceStatus = "Stopped" }
         };
 
         private static readonly List<Server> LighthouseServers = new List<Server>
         {
-            new Server { Id = "lh-1", ServerName = "prod-lh-01", Service = "Metrics & Logging", ServerStatus = "Stopped", ServiceStatus = "Stopped" },
+            new Server { Id = "lighthouse-01", ServerName = "LIGHTHOUSE-01", Service = "Lighthouse", ServerStatus = "Running", ServiceStatus = "Running" },
+            new Server { Id = "lighthouse-02", ServerName = "LIGHTHOUSE-02", Service = "Lighthouse", ServerStatus = "Running", ServiceStatus = "Running" }
         };
 
         [HttpGet("webapi")]
-        public ActionResult<IEnumerable<Server>> GetWebApiServers()
+        public IEnumerable<Server> GetWebApiServers()
         {
-            return Ok(WebApiServers);
+            return WebApiServers;
         }
 
         [HttpGet("worker")]
-        public ActionResult<IEnumerable<Server>> GetWorkerServers()
+        public IEnumerable<Server> GetWorkerServers()
         {
-            return Ok(WorkerServers);
+            return WorkerServers;
         }
 
         [HttpGet("lighthouse")]
-        public ActionResult<IEnumerable<Server>> GetLighthouseServers()
+        public IEnumerable<Server> GetLighthouseServers()
         {
-            return Ok(LighthouseServers);
+            return LighthouseServers;
+        }
+
+        [HttpGet("all")]
+        public IEnumerable<Server> GetAllServers()
+        {
+            return WebApiServers.Concat(WorkerServers).Concat(LighthouseServers);
         }
 
         [HttpPost("action")]
         public IActionResult PerformServerAction([FromBody] ServerActionRequest request)
         {
-            var allServers = WebApiServers.Concat(WorkerServers).Concat(LighthouseServers);
+            // In a real application, this would trigger an action (e.g., via PowerShell or an orchestration tool)
+            // and update the actual server status. For this mock, we simulate a successful action and status update.
+
+            var allServers = GetAllServers().ToList();
             var serverToUpdate = allServers.FirstOrDefault(s => s.Id == request.Id);
 
             if (serverToUpdate == null)
             {
-                return NotFound(new { message = "Server not found." });
+                return NotFound(new { message = $"Server with ID {request.Id} not found." });
             }
 
+            // Simulate status change based on actionType
             switch (request.ActionType)
             {
                 case "startServer":
                     serverToUpdate.ServerStatus = "Running";
+                    serverToUpdate.ServiceStatus = "Running";
                     break;
                 case "stopServer":
                     serverToUpdate.ServerStatus = "Stopped";
                     serverToUpdate.ServiceStatus = "Stopped";
                     break;
                 case "restartServer":
-                    // Simulate a quick restart
                     serverToUpdate.ServerStatus = "Running";
                     serverToUpdate.ServiceStatus = "Running";
                     break;
                 case "startService":
-                    if (serverToUpdate.ServerStatus == "Running")
-                        serverToUpdate.ServiceStatus = "Running";
-                    else
-                        return BadRequest(new { message = "Cannot start service, server is stopped." });
+                    serverToUpdate.ServiceStatus = "Running";
                     break;
                 case "stopService":
-                    if (serverToUpdate.ServerStatus == "Running")
-                        serverToUpdate.ServiceStatus = "Stopped";
-                    else
-                        return BadRequest(new { message = "Cannot stop service, server is stopped." });
+                    serverToUpdate.ServiceStatus = "Stopped";
                     break;
                 case "restartService":
-                    if (serverToUpdate.ServerStatus == "Running")
-                        serverToUpdate.ServiceStatus = "Running";
-                    else
-                        return BadRequest(new { message = "Cannot restart service, server is stopped." });
+                    serverToUpdate.ServiceStatus = "Running";
                     break;
-                default:
-                    return BadRequest(new { message = "Invalid action type." });
             }
 
+            // Return the updated server object
             return Ok(serverToUpdate);
         }
     }

@@ -28,24 +28,18 @@ const Servers = () => {
   useEffect(() => {
     const fetchServers = async () => {
       try {
-        const [webApiResponse, workerResponse, lighthouseResponse] = await Promise.all([
-          fetch("/api/servers/webapi"),
-          fetch("/api/servers/worker"),
-          fetch("/api/servers/lighthouse"),
-        ]);
+        const response = await fetch("/api/servers/all");
 
-        if (!webApiResponse.ok || !workerResponse.ok || !lighthouseResponse.ok) {
+        if (!response.ok) {
           showError('Failed to fetch server data');
           throw new Error('Failed to fetch server data');
         }
 
-        const webApiJson = await webApiResponse.json();
-        const workerJson = await workerResponse.json();
-        const lighthouseJson = await lighthouseResponse.json();
+        const allServers: ServerItem[] = await response.json();
 
-        setWebApiData(webApiJson);
-        setWorkerData(workerJson);
-        setLighthouseData(lighthouseJson);
+        setWebApiData(allServers.filter(s => s.service === "Web API"));
+        setWorkerData(allServers.filter(s => s.service === "Worker Service"));
+        setLighthouseData(allServers.filter(s => s.service === "Lighthouse"));
       } catch (error) {
         console.error("Error fetching server data:", error);
         showError("An error occurred while fetching server data.");
@@ -74,7 +68,7 @@ const Servers = () => {
         throw new Error(errorData.message || 'Failed to perform server action');
       }
 
-      const updatedServer = await response.json();
+      const updatedServer: ServerItem = await response.json();
 
       // Update the state with the new data from the backend
       setData(prevData =>
