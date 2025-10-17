@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
+import { toast } from 'sonner'; // Import sonner toast for dismissal
 
 export interface MigrationItem {
   id: number;
@@ -11,11 +12,21 @@ export interface MigrationItem {
   env: string;
 }
 
+// Define the Server type for the SignalR payload
+interface Server {
+  id: string;
+  serverName: string;
+  service: string;
+  serverStatus: "Running" | "Stopped";
+  serviceStatus: "Running" | "Stopped" | "Down";
+}
+
 interface MigrationState {
   migrations: MigrationItem[];
   selectedItems: number[];
   enqueuedIds: number[];
   logMessages: string[];
+  activeServerActions: Record<string, string | number>; // { serverId: toastId }
   connection: HubConnection | null;
   initializeConnection: () => void;
   addMigration: (item: MigrationItem) => void;
@@ -26,6 +37,8 @@ interface MigrationState {
   deselectAll: () => void;
   setEnqueued: (ids: number[]) => void;
   clearQueue: () => void;
+  addServerActionToast: (serverId: string, toastId: string | number) => void;
+  removeServerActionToast: (serverId: string) => void;
 }
 
 const sampleMigrations: MigrationItem[] = [
@@ -51,7 +64,18 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   selectedItems: [],
   enqueuedIds: [],
   logMessages: [],
+  activeServerActions: {},
   connection: null,
+
+  addServerActionToast: (serverId, toastId) => set((state) => ({
+    activeServerActions: { ...state.activeServerActions, [serverId]: toastId }
+  })),
+
+  removeServerActionToast: (serverId) => set((state) => {
+    const newActions = { ...state.activeServerActions };
+    delete newActions[serverId];
+    return { activeServerActions: newActions };
+  }),
 
   initializeConnection: () => {
     if (get().connection) return;
@@ -63,6 +87,25 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
 
     newConnection.on("ReceiveLogMessage", (message) => {
       set((state) => ({ logMessages: [...state.logMessages, message] }));
+    });
+
+    newConnection.on("ReceiveServerStatusUpdate", (server: Server) => {
+      const { activeServerActions, removeServerActionToast } = get();
+      const toastId = activeServerActions[server.id];
+
+      if (toastId) {
+        // 1. Dismiss the loading toast
+        toast.dismiss(toastId);
+        removeServerActionToast(server.id);
+
+        // 2. Show success notification
+        const successMessage = `${server.service} on ${server.serverName} successfully updated. Status: ${server.serverStatus}/${server.serviceStatus}.`;
+        toast.success("Server Action Complete", { description: successMessage });
+      }
+      
+      // Note: The Servers.tsx page will handle updating its local state based on this SignalR message
+      // by refetching or updating state directly if we were using a global server state store.
+      // For now, we rely on the Servers page's local state update mechanism.
     });
 
     newConnection.start()

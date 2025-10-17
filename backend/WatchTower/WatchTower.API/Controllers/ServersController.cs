@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using WatchTower.API.Hubs;
 using WatchTower.API.Models;
-using System.Threading.Tasks; // Required for Task.Delay
+using System.Threading.Tasks;
 
 namespace WatchTower.API.Controllers
 {
@@ -8,6 +10,13 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class ServersController : ControllerBase
     {
+        private readonly IHubContext<MigrationHub> _hubContext;
+
+        public ServersController(IHubContext<MigrationHub> hubContext)
+        {
+            _hubContext = hubContext;
+        }
+
         private static readonly List<Server> WebApiServers = new List<Server>
         {
             new Server { Id = "webapi-01", ServerName = "WEBAPI-01", Service = "Web API", ServerStatus = "Running", ServiceStatus = "Running" },
@@ -53,47 +62,55 @@ namespace WatchTower.API.Controllers
         }
 
         [HttpPost("action")]
-        public async Task<IActionResult> PerformServerAction([FromBody] ServerActionRequest request)
+        public IActionResult PerformServerAction([FromBody] ServerActionRequest request)
         {
-            // Simulate network delay for better UX demonstration
-            await Task.Delay(2000);
-
-            var allServers = GetAllServers().ToList();
-            var serverToUpdate = allServers.FirstOrDefault(s => s.Id == request.Id);
-
-            if (serverToUpdate == null)
+            // Start the long-running operation in a background task
+            _ = Task.Run(async () =>
             {
-                return NotFound(new { message = $"Server with ID {request.Id} not found." });
-            }
+                // Simulate network delay/processing time
+                await Task.Delay(2000);
 
-            // Simulate status change based on actionType
-            switch (request.ActionType)
-            {
-                case "startServer":
-                    serverToUpdate.ServerStatus = "Running";
-                    serverToUpdate.ServiceStatus = "Running";
-                    break;
-                case "stopServer":
-                    serverToUpdate.ServerStatus = "Stopped";
-                    serverToUpdate.ServiceStatus = "Stopped";
-                    break;
-                case "restartServer":
-                    serverToUpdate.ServerStatus = "Running";
-                    serverToUpdate.ServiceStatus = "Running";
-                    break;
-                case "startService":
-                    serverToUpdate.ServiceStatus = "Running";
-                    break;
-                case "stopService":
-                    serverToUpdate.ServiceStatus = "Stopped";
-                    break;
-                case "restartService":
-                    serverToUpdate.ServiceStatus = "Running";
-                    break;
-            }
+                var allServers = GetAllServers().ToList();
+                var serverToUpdate = allServers.FirstOrDefault(s => s.Id == request.Id);
 
-            // Return the updated server object
-            return Ok(serverToUpdate);
+                if (serverToUpdate == null)
+                {
+                    // In a real app, we might log this error or send a failure notification
+                    return;
+                }
+
+                // Simulate status change based on actionType
+                switch (request.ActionType)
+                {
+                    case "startServer":
+                        serverToUpdate.ServerStatus = "Running";
+                        serverToUpdate.ServiceStatus = "Running";
+                        break;
+                    case "stopServer":
+                        serverToUpdate.ServerStatus = "Stopped";
+                        serverToUpdate.ServiceStatus = "Stopped";
+                        break;
+                    case "restartServer":
+                        serverToUpdate.ServerStatus = "Running";
+                        serverToUpdate.ServiceStatus = "Running";
+                        break;
+                    case "startService":
+                        serverToUpdate.ServiceStatus = "Running";
+                        break;
+                    case "stopService":
+                        serverToUpdate.ServiceStatus = "Stopped";
+                        break;
+                    case "restartService":
+                        serverToUpdate.ServiceStatus = "Running";
+                        break;
+                }
+
+                // Send the updated server status back to all connected clients via SignalR
+                await _hubContext.Clients.All.SendAsync("ReceiveServerStatusUpdate", serverToUpdate);
+            });
+
+            // Immediately return 202 Accepted to the client
+            return Accepted(new { message = "Server action initiated. Status update will follow shortly." });
         }
     }
 }

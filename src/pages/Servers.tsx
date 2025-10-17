@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerStatusTable } from "@/components/ServerStatusTable";
-import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
+import { showError, showLoading } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
+import { useMigrationStore } from "@/hooks/use-migration-store";
 
 interface ServerItem {
   id: string;
@@ -24,7 +25,28 @@ const Servers = () => {
   const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
   const [workerData, setWorkerData] = useState<ServerItem[]>([]);
   const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
+  
+  const { connection, addServerActionToast, removeServerActionToast } = useMigrationStore();
 
+  const updateServerData = (updatedServer: ServerItem) => {
+    const setDataMap = {
+      "Web API": setWebApiData,
+      "Worker Service": setWorkerData,
+      "Lighthouse": setLighthouseData,
+    };
+    
+    const setData = setDataMap[updatedServer.service as keyof typeof setDataMap];
+    
+    if (setData) {
+      setData(prevData =>
+        prevData.map(item =>
+          item.id === updatedServer.id ? updatedServer : item
+        )
+      );
+    }
+  };
+
+  // Effect to handle initial data fetch
   useEffect(() => {
     const fetchServers = async () => {
       try {
@@ -48,26 +70,43 @@ const Servers = () => {
 
     fetchServers();
   }, []);
+  
+  // Effect to listen for SignalR updates
+  useEffect(() => {
+    if (connection) {
+      const handler = (server: ServerItem) => {
+        // Update local state when a status update is received via SignalR
+        updateServerData(server);
+        // The toast dismissal and success notification are handled in useMigrationStore
+      };
+
+      connection.on("ReceiveServerStatusUpdate", handler);
+
+      return () => {
+        connection.off("ReceiveServerStatusUpdate", handler);
+      };
+    }
+  }, [connection]);
+
 
   const handleAction = async (
     id: string,
     actionType: string,
     serverName: string,
     serviceName: string,
-    setData: React.Dispatch<React.SetStateAction<ServerItem[]>>
   ) => {
-    let loadingToastId: string | number | undefined;
     
     // Format actionType (e.g., 'startServer' -> 'start server')
     const actionDescription = actionType.replace(/([A-Z])/g, ' $1').toLowerCase();
     const targetName = actionType.includes('Server') ? serverName : serviceName;
-    const loadingMessage = `Requesting ${actionDescription} for ${targetName}...`;
+    const loadingMessage = `Processing ${actionDescription} for ${targetName}...`;
+
+    // 1. Show persistent loading toast and store its ID
+    const loadingToastId = showLoading(loadingMessage);
+    addServerActionToast(id, loadingToastId);
 
     try {
-      // 1. Show persistent loading toast
-      loadingToastId = showLoading(loadingMessage);
-
-      // 2. Perform API call
+      // 2. Perform API call (which now returns 202 Accepted immediately)
       const response = await fetch('/api/servers/action', {
         method: 'POST',
         headers: {
@@ -76,33 +115,19 @@ const Servers = () => {
         body: JSON.stringify({ id, actionType }),
       });
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 202) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to perform server action');
+        throw new Error(errorData.message || 'Failed to initiate server action');
       }
-
-      const updatedServer: ServerItem = await response.json();
-
-      // 3. Update local state
-      setData(prevData =>
-        prevData.map(item =>
-          item.id === id ? { ...item, ...updatedServer } : item
-        )
-      );
       
-      // 4. Show success notification
-      const successMessage = `${targetName} on ${serverName} successfully updated. Status: ${updatedServer.serverStatus}/${updatedServer.serviceStatus}.`;
-      showSuccess(successMessage);
+      // Success message is handled by SignalR listener upon completion.
+      // If the API call fails to initiate (e.g., 400/500 status), the catch block handles it.
 
     } catch (error: any) {
-      console.error("Error performing server action:", error);
-      // 4. Show error notification
-      showError(error.message || `An error occurred while performing ${actionDescription} on ${targetName}.`);
-    } finally {
-      // 5. Dismiss loading toast
-      if (loadingToastId) {
-        dismissToast(loadingToastId as string);
-      }
+      console.error("Error initiating server action:", error);
+      // If initiation fails, dismiss the toast immediately and show an error.
+      removeServerActionToast(id);
+      showError(error.message || `An error occurred while initiating ${actionDescription} on ${targetName}.`);
     }
   };
 
@@ -130,7 +155,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={webApiData}
-              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName, setWebApiData)}
+              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
             />
           </CardContent>
         </Card>
@@ -142,7 +167,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={workerData}
-              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName, setWorkerData)}
+              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
             />
           </CardContent>
         </Card>
@@ -154,7 +179,7 @@ const Servers = () => {
           <CardContent>
             <ServerStatusTable
               data={lighthouseData}
-              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName, setLighthouseData)}
+              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
             />
           </CardContent>
         </Card>
