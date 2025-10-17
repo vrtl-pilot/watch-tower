@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WatchTower.API.Models;
+using System.Threading.Tasks; // Required for Task.Delay
 
 namespace WatchTower.API.Controllers
 {
@@ -52,10 +53,10 @@ namespace WatchTower.API.Controllers
         }
 
         [HttpPost("action")]
-        public IActionResult PerformServerAction([FromBody] ServerActionRequest request)
+        public async Task<IActionResult> PerformServerAction([FromBody] ServerActionRequest request)
         {
-            // In a real application, this would trigger an action (e.g., via PowerShell or an orchestration tool)
-            // and update the actual server status. For this mock, we simulate a successful action and status update.
+            // Simulate network delay for better UX demonstration
+            await Task.Delay(2000);
 
             var allServers = GetAllServers().ToList();
             var serverToUpdate = allServers.FirstOrDefault(s => s.Id == request.Id);
