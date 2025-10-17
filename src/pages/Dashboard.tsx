@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { StatCard } from "@/components/StatCard";
 import { RequestChart } from "@/components/RequestChart";
 import { Button } from "@/components/ui/button";
@@ -13,21 +14,15 @@ import { WorkerQueueInfo } from "@/components/WorkerQueueInfo";
 import { RequestStagesChart } from "@/components/RequestStagesChart";
 import { EndpointBarChart } from "@/components/EndpointBarChart";
 import { ServerStatusSummary } from "@/components/ServerStatusSummary";
+import { showError } from "@/utils/toast";
 
-const webApiData = [
-  { id: "web-1", serverName: "prod-web-01", service: "User Service", serverStatus: "Running" as const, serviceStatus: "Running" as const },
-  { id: "web-2", serverName: "prod-web-02", service: "Order Service", serverStatus: "Running" as const, serviceStatus: "Down" as const },
-  { id: "web-3", serverName: "prod-web-03", service: "Product Service", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
-];
-
-const workerData = [
-    { id: "work-1", serverName: "prod-worker-01", service: "Data Processing", serverStatus: "Running" as const, serviceStatus: "Running" as const },
-    { id: "work-2", serverName: "prod-worker-02", service: "Email Notifications", serverStatus: "Running" as const, serviceStatus: "Running" as const },
-];
-
-const lighthouseData = [
-    { id: "lh-1", serverName: "prod-lh-01", service: "Metrics & Logging", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
-];
+interface ServerItem {
+  id: string;
+  serverName: string;
+  service: string;
+  serverStatus: "Running" | "Stopped";
+  serviceStatus: "Running" | "Stopped" | "Down";
+}
 
 const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
@@ -46,6 +41,40 @@ const topEndpointsByRequestData = [
 ];
 
 const Dashboard = () => {
+  const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
+  const [workerData, setWorkerData] = useState<ServerItem[]>([]);
+  const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
+
+  useEffect(() => {
+    const fetchServerStatuses = async () => {
+      try {
+        const [webApiResponse, workerResponse, lighthouseResponse] = await Promise.all([
+          fetch("/api/servers/webapi"),
+          fetch("/api/servers/worker"),
+          fetch("/api/servers/lighthouse"),
+        ]);
+
+        if (!webApiResponse.ok || !workerResponse.ok || !lighthouseResponse.ok) {
+          showError('Failed to fetch server status data for the dashboard.');
+          return;
+        }
+
+        const webApiJson = await webApiResponse.json();
+        const workerJson = await workerResponse.json();
+        const lighthouseJson = await lighthouseResponse.json();
+
+        setWebApiData(webApiJson);
+        setWorkerData(workerJson);
+        setLighthouseData(lighthouseJson);
+      } catch (error) {
+        console.error("Error fetching server statuses:", error);
+        showError("An error occurred while fetching server statuses.");
+      }
+    };
+
+    fetchServerStatuses();
+  }, []);
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
