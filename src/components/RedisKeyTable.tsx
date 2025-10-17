@@ -44,6 +44,10 @@ interface DeleteKeyRequest {
   key: string;
 }
 
+interface RedisKeyTableProps {
+  environment: string;
+}
+
 const KEY_TYPES = ["All", "string", "hash", "list", "zset", "set", "stream"];
 
 const formatTtl = (ttl: number) => {
@@ -61,8 +65,11 @@ const formatSize = (size: number) => {
 };
 
 // Note: The current mock API only filters by pattern. We fetch and then filter by type on the frontend.
-const fetchKeys = async (pattern: string): Promise<RedisKeyEntry[]> => {
-  // We fetch a larger set of data to allow frontend filtering to work with the mock
+const fetchKeys = async (pattern: string, environment: string): Promise<RedisKeyEntry[]> => {
+  // In a real app, we would pass the environment to the API: 
+  // const response = await fetch(`/api/redis/keys?env=${environment}&pattern=${encodeURIComponent(pattern)}&limit=50`); 
+  
+  // Using mock endpoint for now
   const response = await fetch(`/api/redis/keys?pattern=${encodeURIComponent(pattern)}&limit=50`); 
   if (!response.ok) {
     throw new Error("Failed to fetch Redis keys.");
@@ -70,7 +77,7 @@ const fetchKeys = async (pattern: string): Promise<RedisKeyEntry[]> => {
   return response.json();
 };
 
-export const RedisKeyTable = () => {
+export const RedisKeyTable = ({ environment }: RedisKeyTableProps) => {
   const queryClient = useQueryClient();
   const [searchPattern, setSearchPattern] = useState("");
   const [selectedType, setSelectedType] = useState("All");
@@ -81,8 +88,8 @@ export const RedisKeyTable = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const { data: rawKeys, isLoading, refetch } = useQuery<RedisKeyEntry[]>({
-    queryKey: ['redisKeys', searchPattern],
-    queryFn: () => fetchKeys(searchPattern),
+    queryKey: ['redisKeys', environment, searchPattern],
+    queryFn: () => fetchKeys(searchPattern, environment),
     refetchInterval: 10000,
   });
 
@@ -95,6 +102,8 @@ export const RedisKeyTable = () => {
   const deleteMutation = useMutation({
     mutationFn: async ({ key }: DeleteKeyRequest) => {
       const encodedKey = encodeURIComponent(key);
+      // In a real app, we would pass the environment to the API: 
+      // const response = await fetch(`/api/redis/key/${encodedKey}?env=${environment}`, {
       const response = await fetch(`/api/redis/key/${encodedKey}`, {
         method: 'DELETE',
       });
@@ -106,7 +115,7 @@ export const RedisKeyTable = () => {
     onSuccess: (data, variables) => {
       showSuccess(data.message || `Key '${variables.key}' deleted successfully.`);
       // Invalidate and refetch the keys query to update the table
-      queryClient.invalidateQueries({ queryKey: ['redisKeys'] });
+      queryClient.invalidateQueries({ queryKey: ['redisKeys', environment] });
     },
     onError: (error, variables) => {
       showError(error.message || `Failed to delete key '${variables.key}'.`);

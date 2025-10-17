@@ -16,10 +16,15 @@ interface RedisKeyValueDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   keyName: string | null;
+  environment: string;
 }
 
-const fetchKeyValue = async (key: string): Promise<string> => {
+const fetchKeyValue = async (key: string, environment: string): Promise<string> => {
   const encodedKey = encodeURIComponent(key);
+  // In a real app, we would pass the environment to the API: 
+  // const response = await fetch(`/api/redis/key/${encodedKey}/value?env=${environment}`);
+  
+  // Using mock endpoint for now
   const response = await fetch(`/api/redis/key/${encodedKey}/value`);
   if (!response.ok) {
     throw new Error("Failed to fetch key value.");
@@ -35,7 +40,7 @@ const fetchKeyValue = async (key: string): Promise<string> => {
   }
 };
 
-export const RedisKeyValueDialog = ({ open, onOpenChange, keyName }: RedisKeyValueDialogProps) => {
+export const RedisKeyValueDialog = ({ open, onOpenChange, keyName, environment }: RedisKeyValueDialogProps) => {
   const [value, setValue] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +51,7 @@ export const RedisKeyValueDialog = ({ open, onOpenChange, keyName }: RedisKeyVal
       setValue(null);
       setError(null);
       
-      fetchKeyValue(keyName)
+      fetchKeyValue(keyName, environment)
         .then(setValue)
         .catch((err) => {
           console.error("Error fetching key value:", err);
@@ -55,7 +60,7 @@ export const RedisKeyValueDialog = ({ open, onOpenChange, keyName }: RedisKeyVal
         })
         .finally(() => setIsLoading(false));
     }
-  }, [open, keyName]);
+  }, [open, keyName, environment]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

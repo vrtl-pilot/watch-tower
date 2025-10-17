@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { showError } from "@/utils/toast";
@@ -6,6 +7,14 @@ import { RedisMemoryChart } from "@/components/RedisMemoryChart";
 import { RedisLatencyChart } from "@/components/RedisLatencyChart";
 import { RedisKeyTable } from "@/components/RedisKeyTable";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 interface RedisInfo {
   status: string;
@@ -23,7 +32,11 @@ interface LatencyData {
   latencyMs: number;
 }
 
-const fetchRedisInfo = async (): Promise<RedisInfo> => {
+const fetchRedisInfo = async (environment: string): Promise<RedisInfo> => {
+  // In a real app, we would pass the environment to the API: 
+  // const response = await fetch(`/api/redis/info?env=${environment}`);
+  
+  // Using mock endpoint for now
   const response = await fetch("/api/redis/info");
   if (!response.ok) {
     throw new Error("Failed to fetch Redis info.");
@@ -31,7 +44,11 @@ const fetchRedisInfo = async (): Promise<RedisInfo> => {
   return response.json();
 };
 
-const fetchLatencyData = async (): Promise<LatencyData[]> => {
+const fetchLatencyData = async (environment: string): Promise<LatencyData[]> => {
+  // In a real app, we would pass the environment to the API: 
+  // const response = await fetch(`/api/redis/latency-data?env=${environment}`);
+  
+  // Using mock endpoint for now
   const response = await fetch("/api/redis/latency-data");
   if (!response.ok) {
     throw new Error("Failed to fetch Redis latency data.");
@@ -40,16 +57,18 @@ const fetchLatencyData = async (): Promise<LatencyData[]> => {
 };
 
 const Redis = () => {
+  const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
+
   const { data: info, isLoading: isLoadingInfo, isError: isErrorInfo } = useQuery<RedisInfo>({
-    queryKey: ['redisInfo'],
-    queryFn: fetchRedisInfo,
+    queryKey: ['redisInfo', environment],
+    queryFn: () => fetchRedisInfo(environment),
     refetchInterval: 5000,
     onError: () => showError("Failed to load Redis instance information."),
   });
 
   const { data: latencyData, isLoading: isLoadingLatency, isError: isErrorLatency } = useQuery<LatencyData[]>({
-    queryKey: ['redisLatency'],
-    queryFn: fetchLatencyData,
+    queryKey: ['redisLatency', environment],
+    queryFn: () => fetchLatencyData(environment),
     refetchInterval: 5000,
     onError: () => showError("Failed to load Redis latency data."),
   });
@@ -85,7 +104,19 @@ const Redis = () => {
 
   return (
     <div className="p-8 pt-6 space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Redis Management</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Redis Management</h2>
+        <Select value={environment} onValueChange={(value) => setEnvironment(value)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Environment" />
+          </SelectTrigger>
+          <SelectContent>
+            {ENVIRONMENTS.map(env => (
+              <SelectItem key={env} value={env.toLowerCase()}>{env}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <RedisStatusCard info={info} />
@@ -99,7 +130,7 @@ const Redis = () => {
         <RedisLatencyChart data={latencyData} />
       </div>
       
-      <RedisKeyTable />
+      <RedisKeyTable environment={environment} />
     </div>
   );
 };
