@@ -68,7 +68,7 @@ namespace WatchTower.API.Controllers
             _ = Task.Run(async () =>
             {
                 // Simulate network delay/processing time
-                await Task.Delay(2000);
+                await Task.Delay(20000);
 
                 var allServers = GetAllServers().ToList();
                 var serverToUpdate = allServers.FirstOrDefault(s => s.Id == request.Id);
