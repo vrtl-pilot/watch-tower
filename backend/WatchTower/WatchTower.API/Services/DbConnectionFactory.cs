@@ -27,10 +27,13 @@ namespace WatchTower.API.Services
         {
             return environment?.ToLower() switch
             {
-                "prod" => _configuration.GetConnectionString("ProdDb"),
-                "staging" => _configuration.GetConnectionString("StagingDb"),
-                "dev" => _configuration.GetConnectionString("DevDb"),
-                _ => _configuration.GetConnectionString("DevDb") // Default to Dev
+                "development" => _configuration.GetConnectionString("DevelopmentDb"),
+                "test01" => _configuration.GetConnectionString("Test01Db"),
+                "test02" => _configuration.GetConnectionString("Test02Db"),
+                "qa01" => _configuration.GetConnectionString("QA01Db"),
+                "qa02" => _configuration.GetConnectionString("QA02Db"),
+                "production" => _configuration.GetConnectionString("ProductionDb"),
+                _ => _configuration.GetConnectionString("DevelopmentDb") // Default to Development
             };
         }
     }

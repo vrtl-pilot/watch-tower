@@ -29,21 +29,21 @@ interface MigrationState {
 }
 
 const sampleMigrations: MigrationItem[] = [
-  { id: 1, fundName: "Global Tech Leaders Fund", dateType: "oneDay", date: new Date("2023-10-26"), env: "prod" },
-  { id: 2, fundName: "Sustainable Energy Fund", dateType: "range", startDate: new Date("2023-10-01"), endDate: new Date("2023-10-07"), env: "prod" },
-  { id: 3, fundName: "Emerging Markets Growth", dateType: "historical", env: "staging" },
-  { id: 4, fundName: "US Blue Chip Equity Fund", dateType: "oneDay", date: new Date("2023-10-25"), env: "prod" },
-  { id: 5, fundName: "European Dividend Aristocrats", dateType: "range", startDate: new Date("2023-09-15"), endDate: new Date("2023-09-20"), env: "prod" },
-  { id: 6, fundName: "Healthcare Innovation Fund", dateType: "oneDay", date: new Date("2023-10-24"), env: "dev" },
-  { id: 7, fundName: "Real Estate Investment Trust (REIT)", dateType: "historical", env: "prod" },
-  { id: 8, fundName: "Asia Pacific Tigers Fund", dateType: "oneDay", date: new Date("2023-10-23"), env: "staging" },
-  { id: 9, fundName: "Corporate Bond Index Fund", dateType: "range", startDate: new Date("2023-10-10"), endDate: new Date("2023-10-15"), env: "prod" },
-  { id: 10, fundName: "Small Cap Value Fund", dateType: "oneDay", date: new Date("2023-10-22"), env: "prod" },
-  { id: 11, fundName: "Global Infrastructure Fund", dateType: "historical", env: "dev" },
-  { id: 12, fundName: "Latin America Opportunities", dateType: "range", startDate: new Date("2023-08-01"), endDate: new Date("2023-08-31"), env: "prod" },
-  { id: 13, fundName: "Biotechnology Breakthroughs", dateType: "oneDay", date: new Date("2023-10-21"), env: "staging" },
-  { id: 14, fundName: "FTSE 100 Index Tracker", dateType: "historical", env: "prod" },
-  { id: 15, fundName: "S&P 500 Low Volatility Fund", dateType: "range", startDate: new Date("2023-10-01"), endDate: new Date("2023-10-31"), env: "prod" },
+  { id: 1, fundName: "Global Tech Leaders Fund", dateType: "oneDay", date: new Date("2023-10-26"), env: "production" },
+  { id: 2, fundName: "Sustainable Energy Fund", dateType: "range", startDate: new Date("2023-10-01"), endDate: new Date("2023-10-07"), env: "qa01" },
+  { id: 3, fundName: "Emerging Markets Growth", dateType: "historical", env: "test01" },
+  { id: 4, fundName: "US Blue Chip Equity Fund", dateType: "oneDay", date: new Date("2023-10-25"), env: "production" },
+  { id: 5, fundName: "European Dividend Aristocrats", dateType: "range", startDate: new Date("2023-09-15"), endDate: new Date("2023-09-20"), env: "qa02" },
+  { id: 6, fundName: "Healthcare Innovation Fund", dateType: "oneDay", date: new Date("2023-10-24"), env: "development" },
+  { id: 7, fundName: "Real Estate Investment Trust (REIT)", dateType: "historical", env: "production" },
+  { id: 8, fundName: "Asia Pacific Tigers Fund", dateType: "oneDay", date: new Date("2023-10-23"), env: "test02" },
+  { id: 9, fundName: "Corporate Bond Index Fund", dateType: "range", startDate: new Date("2023-10-10"), endDate: new Date("2023-10-15"), env: "production" },
+  { id: 10, fundName: "Small Cap Value Fund", dateType: "oneDay", date: new Date("2023-10-22"), env: "qa01" },
+  { id: 11, fundName: "Global Infrastructure Fund", dateType: "historical", env: "development" },
+  { id: 12, fundName: "Latin America Opportunities", dateType: "range", startDate: new Date("2023-08-01"), endDate: new Date("2023-08-31"), env: "production" },
+  { id: 13, fundName: "Biotechnology Breakthroughs", dateType: "oneDay", date: new Date("2023-10-21"), env: "test01" },
+  { id: 14, fundName: "FTSE 100 Index Tracker", dateType: "historical", env: "production" },
+  { id: 15, fundName: "S&P 500 Low Volatility Fund", dateType: "range", startDate: new Date("2023-10-01"), endDate: new Date("2023-10-31"), env: "qa02" },
 ];
 
 export const useMigrationStore = create<MigrationState>((set, get) => ({

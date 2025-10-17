@@ -13,6 +13,7 @@ import { RequestStagesChart } from "@/components/RequestStagesChart";
 import { EndpointBarChart } from "@/components/EndpointBarChart";
 import { ServerStatusSummary } from "@/components/ServerStatusSummary";
 import { showError } from "@/utils/toast";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 interface ServerItem {
   id: string;
@@ -26,7 +27,9 @@ const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
   { endpoint: "Invalid API Key provided", value: "876 errors" },
   { endpoint: "User profile not found", value: "451 errors" },
-  { endpoint: "Payment processing failed", value: "230 errors" },
+  { endpoint: "Payment processing failed",
+    value: "230 errors"
+  },
   { endpoint: "Internal Server Error: Null pointer exception", value: "150 errors" },
 ];
 
@@ -78,14 +81,14 @@ const Dashboard = () => {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <Select defaultValue="prod">
+          <Select defaultValue={DEFAULT_ENVIRONMENT}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Environment" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="prod">Production</SelectItem>
-              <SelectItem value="staging">Staging</SelectItem>
-              <SelectItem value="dev">Development</SelectItem>
+              {ENVIRONMENTS.map(env => (
+                <SelectItem key={env} value={env.toLowerCase()}>{env}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

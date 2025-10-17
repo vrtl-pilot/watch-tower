@@ -14,6 +14,7 @@ import { Search, X, Loader2 } from "lucide-react";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { EligibilityDisplay } from "@/components/EligibilityDisplay";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 interface EligibilityResult {
   fundName: string;
@@ -29,7 +30,7 @@ const FundEligibility = () => {
   const [selectedFundName, setSelectedFundName] = useState("");
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
-  const [environment, setEnvironment] = useState("prod");
+  const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectFund = (fundName: string) => {
@@ -80,14 +81,14 @@ const FundEligibility = () => {
       <div className="p-8 pt-6 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Fund Eligibility</h2>
-          <Select value={environment} onValueChange={setEnvironment}>
+          <Select value={environment} onValueChange={(value) => setEnvironment(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Environment" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="prod">Production</SelectItem>
-              <SelectItem value="staging">Staging</SelectItem>
-              <SelectItem value="dev">Development</SelectItem>
+              {ENVIRONMENTS.map(env => (
+                <SelectItem key={env} value={env.toLowerCase()}>{env}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

@@ -28,6 +28,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { cn } from "@/lib/utils";
 import { useMigrationStore, MigrationItem } from "@/hooks/use-migration-store";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 const Migration = () => {
   const {
@@ -51,6 +52,8 @@ const Migration = () => {
   const [newDate, setNewDate] = useState<Date | undefined>(new Date());
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [selectedEnv, setSelectedEnv] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
+
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -97,7 +100,7 @@ const Migration = () => {
     const newItem: MigrationItem = {
       id: Date.now(),
       fundName: newFundName,
-      env: "prod",
+      env: selectedEnv,
       ...dateInfo,
     } as MigrationItem;
 
@@ -223,14 +226,14 @@ const Migration = () => {
       <div className="p-8 pt-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Migration</h2>
-          <Select defaultValue="prod">
+          <Select value={selectedEnv} onValueChange={(value) => setSelectedEnv(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Environment" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="prod">Production</SelectItem>
-              <SelectItem value="staging">Staging</SelectItem>
-              <SelectItem value="dev">Development</SelectItem>
+              {ENVIRONMENTS.map(env => (
+                <SelectItem key={env} value={env.toLowerCase()}>{env}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

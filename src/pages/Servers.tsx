@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerStatusTable } from "@/components/ServerStatusTable";
 import { showError } from "@/utils/toast";
+import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 interface ServerItem {
   id: string;
@@ -19,7 +20,7 @@ interface ServerItem {
 }
 
 const Servers = () => {
-  const [environment, setEnvironment] = useState("prod");
+  const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
   const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
   const [workerData, setWorkerData] = useState<ServerItem[]>([]);
   const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
@@ -91,14 +92,14 @@ const Servers = () => {
     <div className="p-8 pt-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Servers</h2>
-        <Select value={environment} onValueChange={setEnvironment}>
+        <Select value={environment} onValueChange={(value) => setEnvironment(value)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Environment" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="prod">Production</SelectItem>
-            <SelectItem value="staging">Staging</SelectItem>
-            <SelectItem value="dev">Development</SelectItem>
+            {ENVIRONMENTS.map(env => (
+              <SelectItem key={env} value={env.toLowerCase()}>{env}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
