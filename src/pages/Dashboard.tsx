@@ -15,18 +15,18 @@ import { EndpointBarChart } from "@/components/EndpointBarChart";
 import { ServerStatusSummary } from "@/components/ServerStatusSummary";
 
 const webApiData = [
-  { id: "web-1", server: "prod-web-01", service: "User Service", serverStatus: "Running" as const, serviceStatus: "Running" as const },
-  { id: "web-2", server: "prod-web-02", service: "Order Service", serverStatus: "Running" as const, serviceStatus: "Down" as const },
-  { id: "web-3", server: "prod-web-03", service: "Product Service", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
+  { id: "web-1", serverName: "prod-web-01", service: "User Service", serverStatus: "Running" as const, serviceStatus: "Running" as const },
+  { id: "web-2", serverName: "prod-web-02", service: "Order Service", serverStatus: "Running" as const, serviceStatus: "Down" as const },
+  { id: "web-3", serverName: "prod-web-03", service: "Product Service", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
 ];
 
 const workerData = [
-    { id: "work-1", server: "prod-worker-01", service: "Data Processing", serverStatus: "Running" as const, serviceStatus: "Running" as const },
-    { id: "work-2", server: "prod-worker-02", service: "Email Notifications", serverStatus: "Running" as const, serviceStatus: "Running" as const },
+    { id: "work-1", serverName: "prod-worker-01", service: "Data Processing", serverStatus: "Running" as const, serviceStatus: "Running" as const },
+    { id: "work-2", serverName: "prod-worker-02", service: "Email Notifications", serverStatus: "Running" as const, serviceStatus: "Running" as const },
 ];
 
 const lighthouseData = [
-    { id: "lh-1", server: "prod-lh-01", service: "Metrics & Logging", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
+    { id: "lh-1", serverName: "prod-lh-01", service: "Metrics & Logging", serverStatus: "Stopped" as const, serviceStatus: "Stopped" as const },
 ];
 
 const topErrorsByDescriptionData = [

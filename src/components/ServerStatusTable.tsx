@@ -27,7 +27,7 @@ import { showSuccess } from "@/utils/toast";
 
 interface ServerItem {
   id: string;
-  server: string;
+  serverName: string;
   service: string;
   serverStatus: "Running" | "Stopped";
   serviceStatus: "Running" | "Stopped" | "Down";
@@ -73,15 +73,15 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
     switch (actionType) {
       case "startServer":
         newStatus = { serverStatus: "Running" };
-        successMessage = `Server ${selectedItem.server} started successfully.`;
+        successMessage = `Server ${selectedItem.serverName} started successfully.`;
         break;
       case "stopServer":
         newStatus = { serverStatus: "Stopped", serviceStatus: "Stopped" };
-        successMessage = `Server ${selectedItem.server} shut down successfully.`;
+        successMessage = `Server ${selectedItem.serverName} shut down successfully.`;
         break;
       case "restartServer":
         newStatus = { serverStatus: "Running", serviceStatus: "Running" };
-        successMessage = `Server ${selectedItem.server} restarted successfully.`;
+        successMessage = `Server ${selectedItem.serverName} restarted successfully.`;
         break;
       case "startService":
         newStatus = { serviceStatus: "Running" };
@@ -105,9 +105,9 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
   const getDialogContent = () => {
     if (!selectedItem || !actionType) return { title: "", description: "" };
     const contentMap: Record<ActionType, { title: string; description: string }> = {
-      startServer: { title: "Start Server?", description: `Are you sure you want to start the server ${selectedItem.server}?` },
-      stopServer: { title: "Shutdown Server?", description: `This will shut down the server ${selectedItem.server} and stop its services. Are you sure?` },
-      restartServer: { title: "Restart Server?", description: `Are you sure you want to restart the server ${selectedItem.server}?` },
+      startServer: { title: "Start Server?", description: `Are you sure you want to start the server ${selectedItem.serverName}?` },
+      stopServer: { title: "Shutdown Server?", description: `This will shut down the server ${selectedItem.serverName} and stop its services. Are you sure?` },
+      restartServer: { title: "Restart Server?", description: `Are you sure you want to restart the server ${selectedItem.serverName}?` },
       startService: { title: "Start Service?", description: `Are you sure you want to start the ${selectedItem.service} service?` },
       stopService: { title: "Stop Service?", description: `Are you sure you want to stop the ${selectedItem.service} service?` },
       restartService: { title: "Restart Service?", description: `Are you sure you want to restart the ${selectedItem.service} service?` },
@@ -132,7 +132,7 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
         <TableBody>
           {data.map((item) => (
             <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.server}</TableCell>
+              <TableCell className="font-medium">{item.serverName}</TableCell>
               <TableCell>{item.service}</TableCell>
               <TableCell><StatusBadge status={item.serverStatus} /></TableCell>
               <TableCell><StatusBadge status={item.serviceStatus} /></TableCell>

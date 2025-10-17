@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -8,41 +8,59 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServerStatusTable } from "@/components/ServerStatusTable";
+import { showError } from "@/utils/toast";
 
 interface ServerItem {
   id: string;
-  server: string;
+  serverName: string;
   service: string;
   serverStatus: "Running" | "Stopped";
   serviceStatus: "Running" | "Stopped" | "Down";
 }
 
-const initialWebApiData: ServerItem[] = [
-  { id: "web-1", server: "prod-web-01", service: "User Service", serverStatus: "Running", serviceStatus: "Running" },
-  { id: "web-2", server: "prod-web-02", service: "Order Service", serverStatus: "Running", serviceStatus: "Down" },
-  { id: "web-3", server: "prod-web-03", service: "Product Service", serverStatus: "Stopped", serviceStatus: "Stopped" },
-];
-
-const initialWorkerData: ServerItem[] = [
-    { id: "work-1", server: "prod-worker-01", service: "Data Processing", serverStatus: "Running", serviceStatus: "Running" },
-    { id: "work-2", server: "prod-worker-02", service: "Email Notifications", serverStatus: "Running", serviceStatus: "Running" },
-];
-
-const initialLighthouseData: ServerItem[] = [
-    { id: "lh-1", server: "prod-lh-01", service: "Metrics & Logging", serverStatus: "Stopped", serviceStatus: "Stopped" },
-];
-
 const Servers = () => {
   const [environment, setEnvironment] = useState("prod");
-  const [webApiData, setWebApiData] = useState(initialWebApiData);
-  const [workerData, setWorkerData] = useState(initialWorkerData);
-  const [lighthouseData, setLighthouseData] = useState(initialLighthouseData);
+  const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
+  const [workerData, setWorkerData] = useState<ServerItem[]>([]);
+  const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
+
+  useEffect(() => {
+    const fetchServers = async () => {
+      try {
+        const [webApiResponse, workerResponse, lighthouseResponse] = await Promise.all([
+          fetch("/api/servers/webapi"),
+          fetch("/api/servers/worker"),
+          fetch("/api/servers/lighthouse"),
+        ]);
+
+        if (!webApiResponse.ok || !workerResponse.ok || !lighthouseResponse.ok) {
+          showError('Failed to fetch server data');
+          throw new Error('Failed to fetch server data');
+        }
+
+        const webApiJson = await webApiResponse.json();
+        const workerJson = await workerResponse.json();
+        const lighthouseJson = await lighthouseResponse.json();
+
+        setWebApiData(webApiJson);
+        setWorkerData(workerJson);
+        setLighthouseData(lighthouseJson);
+      } catch (error) {
+        console.error("Error fetching server data:", error);
+        showError("An error occurred while fetching server data.");
+      }
+    };
+
+    fetchServers();
+  }, []);
 
   const handleAction = (
     id: string,
     newStatus: Partial<ServerItem>,
     setData: React.Dispatch<React.SetStateAction<ServerItem[]>>
   ) => {
+    // NOTE: This only updates local state. A real implementation would
+    // send a request to the backend to perform the action.
     setData(prevData =>
       prevData.map(item =>
         item.id === id ? { ...item, ...newStatus } : item

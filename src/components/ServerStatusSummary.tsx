@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 interface ServerItem {
   id: string;
-  server: string;
+  serverName: string;
   service: string;
   serverStatus: "Running" | "Stopped";
   serviceStatus: "Running" | "Stopped" | "Down";
@@ -56,7 +56,7 @@ export const ServerStatusSummary = ({ title, data }: ServerStatusSummaryProps) =
           {data.map((item) => (
             <div key={item.id} className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium leading-none">{item.server}</p>
+                <p className="text-sm font-medium leading-none">{item.serverName}</p>
                 <p className="text-sm text-muted-foreground">{item.service}</p>
               </div>
               <StatusBadge status={getCombinedStatus(item)} />
