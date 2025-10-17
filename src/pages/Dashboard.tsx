@@ -51,6 +51,16 @@ const Dashboard = () => {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
+          <Select defaultValue="prod">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Environment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="prod">Production</SelectItem>
+              <SelectItem value="staging">Staging</SelectItem>
+              <SelectItem value="dev">Development</SelectItem>
+            </SelectContent>
+          </Select>
           <Select defaultValue="last_60_mins">
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time range" />
