@@ -4,20 +4,16 @@ using WatchTower.API.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-// Add SignalR
 builder.Services.AddSignalR();
 
-// Add custom services
+// Register custom services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-
+builder.Services.AddSingleton<IRedisService, RedisService>(); // Registered as Singleton for mock data persistence
 
 var app = builder.Build();
 
@@ -33,8 +29,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Map SignalR Hub
 app.MapHub<MigrationHub>("/migrationhub");
 
 app.Run();

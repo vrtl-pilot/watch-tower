@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using WatchTower.API.Services;
 using WatchTower.Shared.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace WatchTower.API.Controllers
 {
@@ -10,100 +8,102 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class RedisController : ControllerBase
     {
-        private static readonly List<RedisKeyEntry> MockKeys = new List<RedisKeyEntry>
-        {
-            new RedisKeyEntry { Key = "user:session:12345", Type = "string", TtlSeconds = 3600, Size = 128 },
-            new RedisKeyEntry { Key = "cache:fund:global_tech", Type = "hash", TtlSeconds = 600, Size = 4096 },
-            new RedisKeyEntry { Key = "queue:migrations", Type = "list", TtlSeconds = -1, Size = 50 },
-            new RedisKeyEntry { Key = "leaderboard:daily", Type = "zset", TtlSeconds = 86400, Size = 1000 },
-            new RedisKeyEntry { Key = "config:feature_flags", Type = "string", TtlSeconds = -1, Size = 500 },
-            new RedisKeyEntry { Key = "user:profile:9876", Type = "hash", TtlSeconds = 7200, Size = 2048 },
-        };
+        private readonly IRedisService _redisService;
 
-        [HttpGet("info")]
-        public ActionResult<RedisInfo> GetRedisInfo()
+        public RedisController(IRedisService redisService)
         {
-            // Mock data for Redis instance status and memory
-            var info = new RedisInfo
+            _redisService = redisService;
+        }
+
+        /// <summary>
+        /// Gets general information and statistics about the Redis instance.
+        /// </summary>
+        [HttpGet("info")]
+        public async Task<ActionResult<RedisInfo>> GetRedisInfo([FromQuery] string environment)
+        {
+            if (string.IsNullOrEmpty(environment))
             {
-                Status = "Running",
-                Uptime = "12 days, 4 hours",
-                ConnectedClients = 5,
-                TotalKeys = MockKeys.Count + 100000, // Simulate more keys than shown
-                PersistenceStatus = "OK",
-                HitRatio = 0.95,
-                UsedMemoryBytes = 1073741824, // 1 GB
-                MaxMemoryBytes = 4294967296, // 4 GB
-            };
+                return BadRequest("Environment parameter is required.");
+            }
+            
+            var info = await _redisService.GetRedisInfoAsync(environment);
             return Ok(info);
         }
 
+        /// <summary>
+        /// Gets recent latency data for the Redis instance.
+        /// </summary>
         [HttpGet("latency-data")]
-        public ActionResult<IEnumerable<RedisLatencyData>> GetLatencyData()
+        public async Task<ActionResult<IEnumerable<RedisLatencyData>>> GetLatencyData([FromQuery] string environment)
         {
-            // Mock data for latency over time
-            var data = new List<RedisLatencyData>
+            if (string.IsNullOrEmpty(environment))
             {
-                new RedisLatencyData { Time = "10:00", LatencyMs = 1 },
-                new RedisLatencyData { Time = "10:05", LatencyMs = 2 },
-                new RedisLatencyData { Time = "10:10", LatencyMs = 1 },
-                new RedisLatencyData { Time = "10:15", LatencyMs = 3 },
-                new RedisLatencyData { Time = "10:20", LatencyMs = 1 },
-                new RedisLatencyData { Time = "10:25", LatencyMs = 5 },
-                new RedisLatencyData { Time = "10:30", LatencyMs = 2 },
-            };
+                return BadRequest("Environment parameter is required.");
+            }
+            
+            var data = await _redisService.GetLatencyDataAsync(environment);
             return Ok(data);
         }
 
+        /// <summary>
+        /// Searches for keys matching a pattern.
+        /// </summary>
         [HttpGet("keys")]
-        public ActionResult<IEnumerable<RedisKeyEntry>> GetKeys([FromQuery] string pattern = "*", [FromQuery] int limit = 10)
+        public async Task<ActionResult<IEnumerable<RedisKeyEntry>>> GetKeys(
+            [FromQuery] string environment,
+            [FromQuery] string pattern = "*", 
+            [FromQuery] int limit = 50)
         {
-            // Mock implementation for key search/pagination
-            var filteredKeys = MockKeys
-                .Where(k => k.Key.Contains(pattern, System.StringComparison.OrdinalIgnoreCase) || pattern == "*")
-                .Take(limit)
-                .ToList();
+            if (string.IsNullOrEmpty(environment))
+            {
+                return BadRequest("Environment parameter is required.");
+            }
             
-            return Ok(filteredKeys);
+            var keys = await _redisService.GetKeysAsync(environment, pattern, limit);
+            return Ok(keys);
         }
 
+        /// <summary>
+        /// Gets the value of a specific key.
+        /// </summary>
         [HttpGet("key/{key}/value")]
-        public ActionResult<string> GetKeyValue(string key)
+        public async Task<ActionResult<string>> GetKeyValue(string key, [FromQuery] string environment)
         {
-            var keyToDecode = System.Uri.UnescapeDataString(key);
-
-            if (keyToDecode.Contains("session"))
+            if (string.IsNullOrEmpty(environment))
             {
-                return Ok("{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\",\"expiry\":\"2024-12-31T23:59:59Z\"}");
-            }
-            if (keyToDecode.Contains("fund"))
-            {
-                return Ok("[\"AAPL\", \"MSFT\", \"GOOGL\", \"TSLA\", \"AMZN\"]");
-            }
-            if (keyToDecode.Contains("queue"))
-            {
-                return Ok("[\"migration_job_1\", \"migration_job_2\", \"migration_job_3\"]");
+                return BadRequest("Environment parameter is required.");
             }
             
-            return Ok($"Mock value for key: {keyToDecode}. Type: {MockKeys.FirstOrDefault(k => k.Key == keyToDecode)?.Type ?? "string"}");
+            try
+            {
+                var value = await _redisService.GetKeyValueAsync(environment, key);
+                return Ok(value);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
+        /// <summary>
+        /// Deletes a specific key.
+        /// </summary>
         [HttpDelete("key/{key}")]
-        public async Task<IActionResult> DeleteKey(string key)
+        public async Task<IActionResult> DeleteKey(string key, [FromQuery] string environment)
         {
-            // Simulate asynchronous deletion process
-            await Task.Delay(500); 
-            
-            var keyToDecode = System.Uri.UnescapeDataString(key);
-
-            var index = MockKeys.FindIndex(k => k.Key == keyToDecode);
-            if (index != -1)
+            if (string.IsNullOrEmpty(environment))
             {
-                MockKeys.RemoveAt(index);
-                return Accepted(new { message = $"Deletion of key '{keyToDecode}' initiated." });
+                return BadRequest("Environment parameter is required.");
             }
-
-            return NotFound(new { message = $"Key '{keyToDecode}' not found." });
+            
+            var deleted = await _redisService.DeleteKeyAsync(environment, key);
+            
+            if (deleted)
+            {
+                return Ok(new { message = $"Key '{key}' deleted successfully from {environment}." });
+            }
+            
+            return NotFound(new { message = $"Key '{key}' not found in {environment}." });
         }
     }
 }
