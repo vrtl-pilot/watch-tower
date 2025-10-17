@@ -11,6 +11,8 @@ import FundEligibility from "./pages/FundEligibility";
 import NotFound from "./pages/NotFound";
 import Servers from "./pages/Servers";
 import Requests from "./pages/Requests";
+import MigrationDecoder from "./pages/MigrationDecoder";
+import StatJson from "./pages/StatJson";
 import { useMigrationStore } from "./hooks/use-migration-store";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => {
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/migration" element={<Migration />} />
+              <Route path="/migration-decoder" element={<MigrationDecoder />} />
+              <Route path="/stat-json" element={<StatJson />} />
               <Route path="/fund-eligibility" element={<FundEligibility />} />
               <Route path="/servers" element={<Servers />} />
               <Route path="/requests" element={<Requests />} />
