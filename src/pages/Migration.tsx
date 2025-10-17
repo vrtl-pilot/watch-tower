@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { HubConnectionBuilder, HubConnection } from "@microsoft/signalr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,37 @@ const Migration = () => {
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
   const [enqueuedIds, setEnqueuedIds] = useState<number[]>([]);
   const [isEnqueuing, setIsEnqueuing] = useState(false);
+  const [logMessages, setLogMessages] = useState<string[]>([]);
+  const logScrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const connection: HubConnection = new HubConnectionBuilder()
+      .withUrl("/migrationhub")
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().then(() => {
+      setLogMessages(prev => [...prev, "[INFO] SignalR Connected."]);
+    }).catch(err => console.error("SignalR Connection Error: ", err));
+
+    connection.on("ReceiveLogMessage", (message) => {
+      setLogMessages(prev => [...prev, message]);
+    });
+
+    return () => {
+      connection.stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Auto-scroll to the bottom of the log
+    if (logScrollAreaRef.current) {
+      const scrollViewport = logScrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+      if (scrollViewport) {
+        scrollViewport.scrollTop = scrollViewport.scrollHeight;
+      }
+    }
+  }, [logMessages]);
 
   const handleSetStartDate = (date: Date | undefined) => {
     setStartDate(date);
@@ -406,20 +438,10 @@ const Migration = () => {
               <CardTitle>Log</CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-72 w-full rounded-md border p-4 bg-muted/50">
+              <ScrollArea className="h-72 w-full rounded-md border p-4 bg-muted/50" ref={logScrollAreaRef}>
                 <pre className="text-sm">
                   <code>
-                    {[
-                      "[INFO] Starting migration process...",
-                      "[INFO] Connecting to production database...",
-                      "[SUCCESS] Connection established.",
-                      "[INFO] Processing migration for Sample Fund A...",
-                      "[WARN] Data mismatch found for user #123. Skipping.",
-                      "[SUCCESS] Migration for Sample Fund A completed.",
-                      "[INFO] Processing migration for Sample Fund B...",
-                      "[SUCCESS] Migration for Sample Fund B completed.",
-                      "[INFO] Migration process finished.",
-                    ].join("\n")}
+                    {logMessages.join("\n")}
                   </code>
                 </pre>
               </ScrollArea>

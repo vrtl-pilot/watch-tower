@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using WatchTower.API.Hubs;
 using WatchTower.API.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,13 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class MigrationController : ControllerBase
     {
+        private readonly IHubContext<MigrationHub> _hubContext;
+
+        public MigrationController(IHubContext<MigrationHub> hubContext)
+        {
+            _hubContext = hubContext;
+        }
+
         [HttpPost("enqueue")]
         public async Task<IActionResult> EnqueueMigrations([FromBody] List<MigrationItem> items)
         {
@@ -18,15 +27,17 @@ namespace WatchTower.API.Controllers
                 return BadRequest("No migration items provided.");
             }
 
-            // In a real application, this would add items to a persistent queue
-            // for a background worker. For now, we'll simulate the process.
-            System.Console.WriteLine($"Received {items.Count} migration items to enqueue.");
+            await _hubContext.Clients.All.SendAsync("ReceiveLogMessage", $"[INFO] Received request to enqueue {items.Count} migration(s).");
+            
             foreach (var item in items)
             {
-                System.Console.WriteLine($"- Fund: {item.FundName}, Type: {item.DateType}, Env: {item.Env}");
+                // Simulate processing delay for each item
+                await Task.Delay(250); 
+                await _hubContext.Clients.All.SendAsync("ReceiveLogMessage", $"[INFO] Enqueuing migration for Fund: {item.FundName}...");
             }
 
-            await Task.Delay(500); // Simulate network/processing delay
+            await Task.Delay(500); // Simulate final processing delay
+            await _hubContext.Clients.All.SendAsync("ReceiveLogMessage", $"[SUCCESS] All {items.Count} migration(s) have been successfully added to the queue.");
 
             return Ok(new { message = $"{items.Count} migration(s) successfully enqueued." });
         }
