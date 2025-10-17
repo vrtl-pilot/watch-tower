@@ -22,10 +22,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Play, Power, RefreshCw, StopCircle } from "lucide-react";
+import { Play, Power, RefreshCw, StopCircle, Zap } from "lucide-react";
 import { ServerItem } from "@/lib/server-status-utils";
 
-type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService";
+type ActionType = "startServer" | "stopServer" | "restartServer" | "startService" | "stopService" | "restartService" | "resumeService";
 
 interface ServerStatusTableProps {
   data: ServerItem[];
@@ -75,6 +75,7 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
       startService: { title: "Start Service?", description: `Are you sure you want to start the ${selectedItem.service} service?` },
       stopService: { title: "Stop Service?", description: `Are you sure you want to stop the ${selectedItem.service} service?` },
       restartService: { title: "Restart Service?", description: `Are you sure you want to restart the ${selectedItem.service} service?` },
+      resumeService: { title: "Resume Service?", description: `Are you sure you want to resume processing requests for the ${selectedItem.service} service?` },
     };
     return contentMap[actionType];
   };
@@ -133,7 +134,18 @@ export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) =>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "startService")}><Play className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
                             <TooltipContent><p>Start Service</p></TooltipContent>
                           </Tooltip>
-                        ) : (item.serviceStatus === "Down" || item.serviceStatus === "Degraded") ? (
+                        ) : item.serviceStatus === "Degraded" ? (
+                          <>
+                            <Tooltip>
+                              <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "stopService")}><StopCircle className="h-4 w-4 text-red-500" /></Button></TooltipTrigger>
+                              <TooltipContent><p>Stop Service</p></TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "resumeService")}><Zap className="h-4 w-4 text-green-500" /></Button></TooltipTrigger>
+                              <TooltipContent><p>Resume Service</p></TooltipContent>
+                            </Tooltip>
+                          </>
+                        ) : (item.serviceStatus === "Down") ? (
                           <Tooltip>
                             <TooltipTrigger asChild><Button variant="ghost" size="icon" onClick={() => handleActionClick(item, "restartService")}><RefreshCw className="h-4 w-4 text-blue-500" /></Button></TooltipTrigger>
                             <TooltipContent><p>Restart Service</p></TooltipContent>
