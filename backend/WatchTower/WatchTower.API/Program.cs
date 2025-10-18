@@ -45,6 +45,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR Hub
-app.MapHub<MigrationHub>("/migrationhub");
+app.MapHub<WatchTowerHub>("/watchtowerhub");
 
 app.Run();

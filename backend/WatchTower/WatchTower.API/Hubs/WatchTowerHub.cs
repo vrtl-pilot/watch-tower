@@ -4,11 +4,11 @@ using WatchTower.API.Services;
 
 namespace WatchTower.API.Hubs
 {
-    public class MigrationHub : Hub
+    public class WatchTowerHub : Hub
     {
         private readonly IRedisService _redisService;
 
-        public MigrationHub(IRedisService redisService)
+        public WatchTowerHub(IRedisService redisService)
         {
             _redisService = redisService;
         }

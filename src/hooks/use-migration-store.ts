@@ -82,7 +82,7 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     if (get().connection) return;
     
     const newConnection = new HubConnectionBuilder()
-      .withUrl("/migrationhub")
+      .withUrl("/watchtowerhub")
       .withAutomaticReconnect()
       .build();
 
