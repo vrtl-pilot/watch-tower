@@ -9,14 +9,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Configure enums to be serialized as strings instead of integers
+        // Configure MVC/API controllers to serialize enums as strings
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add SignalR
-builder.Services.AddSignalR();
+// Add SignalR and configure its JSON serialization
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        // Configure SignalR to serialize enums as strings
+        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Add custom services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
