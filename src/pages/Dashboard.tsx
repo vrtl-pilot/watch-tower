@@ -15,6 +15,7 @@ import { ServerStatusSummary } from "@/components/ServerStatusSummary";
 import { showError } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 import { ServerItem } from "@/lib/server-status-utils";
+import { Loader2 } from "lucide-react";
 
 const topErrorsByDescriptionData = [
   { endpoint: "Database connection timeout", value: "1,203 errors" },
@@ -39,9 +40,11 @@ const Dashboard = () => {
   const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
   const [workerData, setWorkerData] = useState<ServerItem[]>([]);
   const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   useEffect(() => {
     const fetchServerStatuses = async () => {
+      setIsLoading(true); // Set loading to true when starting fetch
       try {
         const response = await fetch("/api/servers/all");
 
@@ -60,6 +63,8 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error fetching server statuses:", error);
         showError("An error occurred while fetching server statuses.");
+      } finally {
+        setIsLoading(false); // Set loading to false when fetch completes
       }
     };
 
@@ -128,9 +133,9 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="lg:col-span-1 space-y-4">
-          <ServerStatusSummary title="Web API Status" data={webApiData} />
-          <ServerStatusSummary title="Worker Status" data={workerData} />
-          <ServerStatusSummary title="Lighthouse Status" data={lighthouseData} />
+          <ServerStatusSummary title="Web API Status" data={webApiData} isLoading={isLoading} />
+          <ServerStatusSummary title="Worker Status" data={workerData} isLoading={isLoading} />
+          <ServerStatusSummary title="Lighthouse Status" data={lighthouseData} isLoading={isLoading} />
         </div>
       </div>
     </div>

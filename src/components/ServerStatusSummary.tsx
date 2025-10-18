@@ -3,12 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { ServerItem } from "@/lib/server-status-utils";
 
 interface ServerStatusSummaryProps {
   title: string;
   data: ServerItem[];
+  isLoading?: boolean; // New prop
 }
 
 type CombinedStatus = "Online" | "Offline" | "Service Down" | "Service Stopped" | "Degraded";
@@ -34,7 +35,7 @@ const StatusBadge = ({ status }: { status: CombinedStatus }) => {
   );
 };
 
-export const ServerStatusSummary = ({ title, data }: ServerStatusSummaryProps) => {
+export const ServerStatusSummary = ({ title, data, isLoading }: ServerStatusSummaryProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -47,17 +48,23 @@ export const ServerStatusSummary = ({ title, data }: ServerStatusSummaryProps) =
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 pt-2">
-          {data.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium leading-none">{item.serverName}</p>
-                <p className="text-sm text-muted-foreground">{item.service}</p>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-24">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-4 pt-2">
+            {data.map((item) => (
+              <div key={item.id} className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium leading-none">{item.serverName}</p>
+                  <p className="text-sm text-muted-foreground">{item.service}</p>
+                </div>
+                <StatusBadge status={getCombinedStatus(item)} />
               </div>
-              <StatusBadge status={getCombinedStatus(item)} />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
