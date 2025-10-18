@@ -13,7 +13,7 @@ export interface MigrationItem {
   env: string;
 }
 
-// Define the Server type for the SignalR payload
+// Define the Server type for the SignalR payload, now expecting strings
 interface Server {
   id: string;
   serverName: string;

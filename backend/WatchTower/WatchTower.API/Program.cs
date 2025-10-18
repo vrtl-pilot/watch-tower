@@ -1,11 +1,17 @@
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
 using Microsoft.AspNetCore.SignalR;
+using System.Text.Json.Serialization; // Required for JsonStringEnumConverter
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configure enums to be serialized as strings instead of integers
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
