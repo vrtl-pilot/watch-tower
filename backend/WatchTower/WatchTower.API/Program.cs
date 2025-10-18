@@ -1,5 +1,6 @@
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,13 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add SignalR
 builder.Services.AddSignalR();
 
-// Register custom services
+// Add custom services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-builder.Services.AddSingleton<IRedisService, RedisService>(); // Registered as Singleton for mock data persistence
+builder.Services.AddScoped<IRedisService, RedisService>();
 
 var app = builder.Build();
 
@@ -29,6 +32,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
 app.MapHub<MigrationHub>("/migrationhub");
 
 app.Run();

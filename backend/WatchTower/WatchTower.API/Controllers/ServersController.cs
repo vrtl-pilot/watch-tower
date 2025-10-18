@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using WatchTower.API.Hubs;
 using WatchTower.API.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace WatchTower.API.Controllers
 {
@@ -9,59 +12,94 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class ServersController : ControllerBase
     {
-        private static readonly List<Server> MockServers = new List<Server>
+        private readonly IHubContext<MigrationHub> _hubContext;
+
+        public ServersController(IHubContext<MigrationHub> hubContext)
         {
-            // Web API Servers
-            new Server { Id = "webapi-01", ServerName = "API-Prod-01", Service = "Web API", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
-            new Server { Id = "webapi-02", ServerName = "API-Prod-02", Service = "Web API", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Degraded }, // Degraded Service
-            new Server { Id = "webapi-03", ServerName = "API-QA-01", Service = "Web API", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Stopped },
-            new Server { Id = "webapi-04", ServerName = "API-Dev-01", Service = "Web API", ServerStatus = ServerStatus.Stopped, ServiceStatus = ServiceStatus.Stopped },
+            _hubContext = hubContext;
+        }
 
-            // Worker Servers
-            new Server { Id = "worker-01", ServerName = "Worker-Prod-01", Service = "Worker Service", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
-            new Server { Id = "worker-02", ServerName = "Worker-Prod-02", Service = "Worker Service", ServerStatus = ServerStatus.Degraded, ServiceStatus = ServiceStatus.Running }, // Degraded Server
-            new Server { Id = "worker-03", ServerName = "Worker-QA-01", Service = "Worker Service", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Down },
-            new Server { Id = "worker-04", ServerName = "Worker-Dev-01", Service = "Worker Service", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Stopped },
-
-            // Lighthouse Servers
-            new Server { Id = "lh-01", ServerName = "LH-Prod-01", Service = "Lighthouse", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
-            new Server { Id = "lh-02", ServerName = "LH-QA-01", Service = "Lighthouse", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Degraded }, // Degraded Service
-            new Server { Id = "lh-03", ServerName = "LH-Dev-01", Service = "Lighthouse", ServerStatus = ServerStatus.Stopped, ServiceStatus = ServiceStatus.Stopped },
+        // Mock data for demonstration purposes
+        private static List<Server> _servers = new List<Server>
+        {
+            new Server { Id = "webapi-01", ServerName = "API-SVR-01", Service = "Web API", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
+            new Server { Id = "webapi-02", ServerName = "API-SVR-02", Service = "Web API", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
+            new Server { Id = "worker-01", ServerName = "WRK-SVR-01", Service = "Worker Service", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
+            new Server { Id = "worker-02", ServerName = "WRK-SVR-02", Service = "Worker Service", ServerStatus = ServerStatus.Degraded, ServiceStatus = ServiceStatus.Degraded },
+            new Server { Id = "lighthouse-01", ServerName = "LHT-SVR-01", Service = "Lighthouse", ServerStatus = ServerStatus.Running, ServiceStatus = ServiceStatus.Running },
+            new Server { Id = "lighthouse-02", ServerName = "LHT-SVR-02", Service = "Lighthouse", ServerStatus = ServerStatus.Stopped, ServiceStatus = ServiceStatus.Stopped },
         };
 
         [HttpGet("all")]
         public IEnumerable<Server> GetAllServers()
         {
-            return MockServers;
+            return _servers;
         }
 
         [HttpGet("webapi")]
-        public IEnumerable<Server> GetWebApiServers()
-        {
-            return MockServers.Where(s => s.Service == "Web API");
-        }
+        public IEnumerable<Server> GetWebApiServers() => _servers.Where(s => s.Service == "Web API");
 
         [HttpGet("worker")]
-        public IEnumerable<Server> GetWorkerServers()
-        {
-            return MockServers.Where(s => s.Service == "Worker Service");
-        }
+        public IEnumerable<Server> GetWorkerServers() => _servers.Where(s => s.Service == "Worker Service");
 
         [HttpGet("lighthouse")]
-        public IEnumerable<Server> GetLighthouseServers()
-        {
-            return MockServers.Where(s => s.Service == "Lighthouse");
-        }
+        public IEnumerable<Server> GetLighthouseServers() => _servers.Where(s => s.Service == "Lighthouse");
 
         [HttpPost("action")]
-        public IActionResult PerformServerAction([FromBody] ServerActionRequest request)
+        public async Task<IActionResult> PerformServerAction([FromBody] ServerActionRequest request)
         {
-            // Mock implementation: In a real app, this would trigger an async operation.
-            // For now, we just log and return 202 Accepted.
-            System.Console.WriteLine($"Received action request: {request.ActionType} for server ID {request.Id}");
-            
-            // Simulate immediate acceptance
-            return Accepted(new { message = $"Action '{request.ActionType}' initiated for server {request.Id}." });
+            var server = _servers.FirstOrDefault(s => s.Id == request.Id);
+            if (server == null)
+            {
+                return NotFound(new { message = $"Server with ID {request.Id} not found." });
+            }
+
+            // Simulate asynchronous action execution
+            _ = Task.Run(async () =>
+            {
+                // Simulate work being done (e.g., calling external service, waiting)
+                await Task.Delay(3000); 
+
+                // Determine new status based on action type (Mocking logic)
+                ServerStatus newServerStatus = server.ServerStatus;
+                ServiceStatus newServiceStatus = server.ServiceStatus;
+
+                switch (request.ActionType)
+                {
+                    case "startServer":
+                        newServerStatus = ServerStatus.Running;
+                        newServiceStatus = ServiceStatus.Running;
+                        break;
+                    case "stopServer":
+                        newServerStatus = ServerStatus.Stopped;
+                        newServiceStatus = ServiceStatus.Stopped;
+                        break;
+                    case "restartServer":
+                        newServerStatus = ServerStatus.Running;
+                        newServiceStatus = ServiceStatus.Running;
+                        break;
+                    case "startService":
+                    case "resumeService":
+                        newServiceStatus = ServiceStatus.Running;
+                        break;
+                    case "stopService":
+                        newServiceStatus = ServiceStatus.Stopped;
+                        break;
+                    case "restartService":
+                        newServiceStatus = ServiceStatus.Running;
+                        break;
+                }
+
+                // Update the mock state
+                server.ServerStatus = newServerStatus;
+                server.ServiceStatus = newServiceStatus;
+
+                // Send update via SignalR
+                await _hubContext.Clients.All.SendAsync("ReceiveServerStatusUpdate", server);
+            });
+
+            // Return 202 Accepted immediately, as the action is processing asynchronously
+            return Accepted(new { message = $"Action '{request.ActionType}' initiated for {server.ServerName}." });
         }
     }
 }
