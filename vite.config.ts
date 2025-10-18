@@ -13,7 +13,7 @@ export default defineConfig(() => ({
         changeOrigin: true,
         secure: false,
       },
-      '/migrationhub': {
+      '/watchtowerhub': { // Updated proxy path
         target: 'https://localhost:7179',
         changeOrigin: true,
         secure: false,

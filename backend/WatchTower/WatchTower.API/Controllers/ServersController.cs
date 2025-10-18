@@ -12,9 +12,9 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class ServersController : ControllerBase
     {
-        private readonly IHubContext<MigrationHub> _hubContext;
+        private readonly IHubContext<WatchTowerHub> _hubContext;
 
-        public ServersController(IHubContext<MigrationHub> hubContext)
+        public ServersController(IHubContext<WatchTowerHub> hubContext)
         {
             _hubContext = hubContext;
         }
