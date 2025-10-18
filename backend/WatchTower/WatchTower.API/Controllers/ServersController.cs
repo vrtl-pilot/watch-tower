@@ -58,7 +58,7 @@ namespace WatchTower.API.Controllers
             _ = Task.Run(async () =>
             {
                 // Simulate work being done (e.g., calling external service, waiting)
-                await Task.Delay(3000); 
+                await Task.Delay(5000); 
 
                 // Determine new status based on action type (Mocking logic)
                 ServerStatus newServerStatus = server.ServerStatus;

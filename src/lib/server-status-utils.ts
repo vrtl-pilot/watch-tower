@@ -39,11 +39,15 @@ export const formatServerStatus = (rawServer: RawServerItem): ServerItem => {
   const serverStatusString = SERVER_STATUS_MAP[rawServer.serverStatus] || "Stopped";
   const serviceStatusString = SERVICE_STATUS_MAP[rawServer.serviceStatus] || "Down";
 
+  // Explicitly construct the object to ensure string statuses are used, 
+  // avoiding potential issues with property order in the spread operator.
   return {
-    ...rawServer,
+    id: rawServer.id,
+    serverName: rawServer.serverName,
+    service: rawServer.service,
     serverStatus: serverStatusString,
     serviceStatus: serviceStatusString,
-  } as ServerItem;
+  };
 };
 
 /**
