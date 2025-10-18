@@ -116,6 +116,29 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
       
       // Note: The Servers.tsx page handles updating its local state based on this SignalR message
     });
+    
+    // NEW: Handle explicit failure messages from the server
+    newConnection.on("ReceiveServerActionFailure", (serverId: string, errorMessage: string) => {
+      const { activeServerActions, removeServerActionToast } = get();
+      const toastId = activeServerActions[serverId];
+      const addNotification = useNotificationStore.getState().addNotification;
+
+      if (toastId) {
+        toast.dismiss(toastId);
+        removeServerActionToast(serverId);
+        
+        // Show error toast
+        toast.error("Server Action Failed", { description: errorMessage });
+
+        // Add persistent notification
+        addNotification({
+          title: "Server Action Failed",
+          description: errorMessage,
+          path: "/servers",
+        });
+      }
+    });
+
 
     newConnection.start()
       .then(() => set((state) => ({ logMessages: [...state.logMessages, "[INFO] SignalR Connected."] })))
