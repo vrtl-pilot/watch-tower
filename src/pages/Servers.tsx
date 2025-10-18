@@ -12,12 +12,14 @@ import { showError, showLoading } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 import { useMigrationStore } from "@/hooks/use-migration-store";
 import { ServerItem } from "@/lib/server-status-utils";
+import { Loader2 } from "lucide-react";
 
 const Servers = () => {
   const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
   const [webApiData, setWebApiData] = useState<ServerItem[]>([]);
   const [workerData, setWorkerData] = useState<ServerItem[]>([]);
   const [lighthouseData, setLighthouseData] = useState<ServerItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
   
   const { connection, addServerActionToast, removeServerActionToast } = useMigrationStore();
 
@@ -42,7 +44,11 @@ const Servers = () => {
   // Effect to handle initial data fetch
   useEffect(() => {
     const fetchServers = async () => {
+      setIsLoading(true);
       try {
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         const response = await fetch("/api/servers/all");
 
         if (!response.ok) {
@@ -59,6 +65,8 @@ const Servers = () => {
       } catch (error) {
         console.error("Error fetching server data:", error);
         showError("An error occurred while fetching server data.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -125,6 +133,26 @@ const Servers = () => {
     }
   };
 
+  const renderServerContent = (data: ServerItem[], title: string) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <ServerStatusTable
+            data={data}
+            onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="p-8 pt-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -142,41 +170,9 @@ const Servers = () => {
       </div>
 
       <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Web API</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ServerStatusTable
-              data={webApiData}
-              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Worker</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ServerStatusTable
-              data={workerData}
-              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>LightHouse</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ServerStatusTable
-              data={lighthouseData}
-              onAction={(id, actionType, serverName, serviceName) => handleAction(id, actionType, serverName, serviceName)}
-            />
-          </CardContent>
-        </Card>
+        {renderServerContent(webApiData, "Web API")}
+        {renderServerContent(workerData, "Worker")}
+        {renderServerContent(lighthouseData, "LightHouse")}
       </div>
     </div>
   );
