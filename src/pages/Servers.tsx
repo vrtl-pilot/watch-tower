@@ -46,8 +46,7 @@ const Servers = () => {
     const fetchServers = async () => {
       setIsLoading(true);
       try {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Removed client-side simulated delay, now handled by backend API
 
         const response = await fetch("/api/servers/all");
 
