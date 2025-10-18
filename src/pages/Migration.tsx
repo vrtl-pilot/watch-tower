@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Trash2, Pencil, Check, Ban, Search, Loader2 } from "lucide-react";
+import { X, Trash2, Pencil, Check, Ban, Search, Loader2, Maximize } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,6 +29,7 @@ import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { cn } from "@/lib/utils";
 import { useMigrationStore, MigrationItem } from "@/hooks/use-migration-store";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
+import { LogViewerDialog } from "@/components/LogViewerDialog";
 
 const Migration = () => {
   const {
@@ -57,6 +58,7 @@ const Migration = () => {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isLogViewerOpen, setIsLogViewerOpen] = useState(false); // New state for log viewer
   const [itemToDelete, setItemToDelete] = useState<number | "bulk" | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<MigrationItem>>({});
@@ -408,8 +410,11 @@ const Migration = () => {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Log</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setIsLogViewerOpen(true)} disabled={logMessages.length === 0}>
+                <Maximize className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-72 w-full rounded-md border p-4 bg-muted/50" ref={logScrollAreaRef}>
@@ -464,6 +469,11 @@ const Migration = () => {
         open={isFundSearchOpen}
         onOpenChange={setIsFundSearchOpen}
         onSelectFund={handleSelectFund}
+      />
+      <LogViewerDialog
+        open={isLogViewerOpen}
+        onOpenChange={setIsLogViewerOpen}
+        logMessages={logMessages}
       />
     </>
   );
