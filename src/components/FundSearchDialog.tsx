@@ -10,51 +10,38 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError } from "@/utils/toast";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 
 interface FundSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectFund: (fundName: string) => void;
-  initialSearchTerm: string; // New prop for initial search term
 }
 
-export const FundSearchDialog = ({ open, onOpenChange, onSelectFund, initialSearchTerm }: FundSearchDialogProps) => {
+export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearchDialogProps) => {
   const [funds, setFunds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-
-  const fetchFunds = async (query: string) => {
-    setIsLoading(true);
-    try {
-      // Pass the search query to the API
-      const response = await fetch(`/api/funds?query=${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch funds.");
-      }
-      const data = await response.json();
-      setFunds(data);
-    } catch (error) {
-      console.error("Error fetching funds:", error);
-      showError("Could not load funds. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (open) {
-      // When dialog opens, set local search term and fetch data
-      setSearchTerm(initialSearchTerm);
-      fetchFunds(initialSearchTerm);
+      const fetchFunds = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch("/api/funds");
+          if (!response.ok) {
+            throw new Error("Failed to fetch funds.");
+          }
+          const data = await response.json();
+          setFunds(data);
+        } catch (error) {
+          console.error("Error fetching funds:", error);
+          showError("Could not load funds. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchFunds();
     }
-  }, [open, initialSearchTerm]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchFunds(searchTerm);
-  };
+  }, [open]);
 
   const handleSelect = (fundName: string) => {
     onSelectFund(fundName);
@@ -65,24 +52,11 @@ export const FundSearchDialog = ({ open, onOpenChange, onSelectFund, initialSear
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Select or Search Fund</DialogTitle>
+          <DialogTitle>Select a Fund</DialogTitle>
           <DialogDescription>
-            Enter a fund name or partial name to search the database.
+            Choose a fund from the list below to add to the migration queue.
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-          <Input
-            placeholder="Search fund name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            disabled={isLoading}
-          />
-          <Button type="submit" size="icon" disabled={isLoading}>
-            <Search className="h-4 w-4" />
-          </Button>
-        </form>
-
         <ScrollArea className="h-72">
           <div className="space-y-2 p-1">
             {isLoading ? (
@@ -103,7 +77,7 @@ export const FundSearchDialog = ({ open, onOpenChange, onSelectFund, initialSear
               ))
             ) : (
               <div className="flex items-center justify-center h-full p-4">
-                <p className="text-sm text-muted-foreground">No funds found matching "{searchTerm}".</p>
+                <p className="text-sm text-muted-foreground">No funds found.</p>
               </div>
             )}
           </div>
