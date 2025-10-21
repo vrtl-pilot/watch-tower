@@ -8,28 +8,24 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class FundsController : ControllerBase
     {
-        private readonly IDataAccessHelper _dataAccessHelper;
+        private readonly IFundService _fundService;
 
-        public FundsController(IDataAccessHelper dataAccessHelper)
+        public FundsController(IFundService fundService)
         {
-            _dataAccessHelper = dataAccessHelper;
+            _fundService = fundService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetFundNames()
         {
-            // Fetching fund names directly from the database.
-            // This assumes a 'Funds' table with a 'FundName' column.
-            var sql = "SELECT FundName FROM Funds ORDER BY FundName;";
-
             try
             {
-                var funds = await _dataAccessHelper.QueryAsync<string>(sql, new { });
+                var funds = await _fundService.GetFundNamesAsync();
                 return Ok(funds);
             }
             catch (System.Exception)
             {
-                // In a real application, you would log this exception.
+                // The service layer handles logging, we return a generic error here.
                 return StatusCode(500, "An error occurred while fetching fund names.");
             }
         }
