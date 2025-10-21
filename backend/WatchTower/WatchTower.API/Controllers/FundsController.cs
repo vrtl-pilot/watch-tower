@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using WatchTower.API.Services;
 
@@ -19,24 +18,20 @@ namespace WatchTower.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFundNames()
         {
-            // This simulates fetching a list of funds from the database.
-            await Task.Delay(300); 
+            // Fetching fund names directly from the database.
+            // This assumes a 'Funds' table with a 'FundName' column.
+            var sql = "SELECT FundName FROM Funds ORDER BY FundName;";
 
-            var sampleFunds = new List<string>
+            try
             {
-                "Global Tech Leaders Fund",
-                "Sustainable Energy Fund",
-                "Emerging Markets Growth",
-                "US Blue Chip Equity Fund",
-                "European Dividend Aristocrats",
-                "Healthcare Innovation Fund",
-                "Real Estate Investment Trust (REIT)",
-                "Asia Pacific Tigers Fund",
-                "Corporate Bond Index Fund",
-                "Small Cap Value Fund"
-            };
-
-            return Ok(sampleFunds);
+                var funds = await _dataAccessHelper.QueryAsync<string>(sql, new { });
+                return Ok(funds);
+            }
+            catch (System.Exception)
+            {
+                // In a real application, you would log this exception.
+                return StatusCode(500, "An error occurred while fetching fund names.");
+            }
         }
     }
 }
