@@ -5,6 +5,6 @@ namespace WatchTower.API.Services
 {
     public interface IFundService
     {
-        Task<IEnumerable<string>> GetFundNamesAsync();
+        Task<IEnumerable<string>> GetFundNamesAsync(string? searchPattern = null);
     }
 }

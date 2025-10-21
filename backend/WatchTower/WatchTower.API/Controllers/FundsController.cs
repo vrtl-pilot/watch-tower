@@ -16,16 +16,15 @@ namespace WatchTower.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetFundNames()
+        public async Task<IActionResult> GetFundNames([FromQuery] string? searchPattern)
         {
             try
             {
-                var funds = await _fundService.GetFundNamesAsync();
+                var funds = await _fundService.GetFundNamesAsync(searchPattern);
                 return Ok(funds);
             }
             catch (System.Exception)
             {
-                // The service layer handles logging, we return a generic error here.
                 return StatusCode(500, "An error occurred while fetching fund names.");
             }
         }

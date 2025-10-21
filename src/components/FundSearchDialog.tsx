@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError } from "@/utils/toast";
+import { Input } from "./ui/input";
+import { Search, Loader2 } from "lucide-react";
 
 interface FundSearchDialogProps {
   open: boolean;
@@ -17,29 +19,52 @@ interface FundSearchDialogProps {
   onSelectFund: (fundName: string) => void;
 }
 
+const fetchFunds = async (pattern: string): Promise<string[]> => {
+  const query = pattern ? `?searchPattern=${encodeURIComponent(pattern)}` : '';
+  const response = await fetch(`/api/funds${query}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch funds.");
+  }
+  return response.json();
+};
+
 export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearchDialogProps) => {
   const [funds, setFunds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPattern, setCurrentPattern] = useState("");
 
+  const handleSearch = async (pattern: string) => {
+    if (!pattern.trim()) {
+      setFunds([]);
+      showError("Please enter a search term.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setCurrentPattern(pattern);
+    try {
+      const data = await fetchFunds(pattern);
+      setFunds(data);
+    } catch (error) {
+      console.error("Error fetching funds:", error);
+      showError("Could not load funds. Please try again.");
+      setFunds([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial load when dialog opens (with current search query if available)
   useEffect(() => {
     if (open) {
-      const fetchFunds = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch("/api/funds");
-          if (!response.ok) {
-            throw new Error("Failed to fetch funds.");
-          }
-          const data = await response.json();
-          setFunds(data);
-        } catch (error) {
-          console.error("Error fetching funds:", error);
-          showError("Could not load funds. Please try again.");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchFunds();
+      // If the dialog opens, perform an initial search based on the current query
+      // If searchQuery is empty, we rely on the user to click search or enter text.
+      if (searchQuery.trim()) {
+        handleSearch(searchQuery);
+      } else {
+        setFunds([]);
+      }
     }
   }, [open]);
 
@@ -48,15 +73,34 @@ export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearc
     onOpenChange(false);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch(searchQuery);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Select a Fund</DialogTitle>
+          <DialogTitle>Search and Select Fund</DialogTitle>
           <DialogDescription>
-            Choose a fund from the list below to add to the migration queue.
+            Enter a fund name or pattern to search the database.
           </DialogDescription>
         </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
+          <Input
+            placeholder="Enter fund name or pattern (e.g., Global*)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1"
+            disabled={isLoading}
+          />
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          </Button>
+        </form>
+        
         <ScrollArea className="h-72">
           <div className="space-y-2 p-1">
             {isLoading ? (
@@ -75,9 +119,13 @@ export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearc
                   </Button>
                 </div>
               ))
+            ) : currentPattern.trim() ? (
+              <div className="flex items-center justify-center h-full p-4">
+                <p className="text-sm text-muted-foreground">No funds found matching "{currentPattern}".</p>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full p-4">
-                <p className="text-sm text-muted-foreground">No funds found.</p>
+                <p className="text-sm text-muted-foreground">Enter a search pattern and click search.</p>
               </div>
             )}
           </div>

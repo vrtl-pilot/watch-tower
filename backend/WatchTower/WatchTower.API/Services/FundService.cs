@@ -12,14 +12,24 @@ namespace WatchTower.API.Services
             _dataAccessHelper = dataAccessHelper;
         }
 
-        public async Task<IEnumerable<string>> GetFundNamesAsync()
+        public async Task<IEnumerable<string>> GetFundNamesAsync(string? searchPattern = null)
         {
-            // Query execution is now encapsulated in the service layer.
-            var sql = "SELECT FundName FROM Funds ORDER BY FundName;";
+            // Use LIKE for pattern matching if a search pattern is provided.
+            var sql = "SELECT FundName FROM Funds";
+            var parameters = new Dictionary<string, object>();
+
+            if (!string.IsNullOrWhiteSpace(searchPattern))
+            {
+                // Assuming SQL Server syntax for LIKE matching
+                sql += " WHERE FundName LIKE @Pattern";
+                parameters.Add("@Pattern", $"%{searchPattern}%");
+            }
+            
+            sql += " ORDER BY FundName;";
 
             try
             {
-                var funds = await _dataAccessHelper.QueryAsync<string>(sql, new { });
+                var funds = await _dataAccessHelper.QueryAsync<string>(sql, parameters);
                 return funds;
             }
             catch (System.Exception ex)
