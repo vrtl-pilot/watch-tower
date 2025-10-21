@@ -1,5 +1,5 @@
-using WatchTower.Shared.Models;
 using System.Threading.Tasks;
+using WatchTower.Shared.Models;
 
 namespace WatchTower.API.Services
 {

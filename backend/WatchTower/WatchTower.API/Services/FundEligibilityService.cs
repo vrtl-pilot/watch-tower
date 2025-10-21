@@ -1,9 +1,7 @@
-using Microsoft.Data.SqlClient;
-using WatchTower.Shared.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using WatchTower.Shared.Models;
 
 namespace WatchTower.API.Services
 {
@@ -18,48 +16,39 @@ namespace WatchTower.API.Services
 
         public async Task<FundEligibilityResult> CheckEligibilityAsync(FundEligibilityRequest request)
         {
-            // IMPORTANT: This is a placeholder query. You should replace it with your actual query.
-            const string query = @"
-                SELECT 
-                    c.Name AS CriterionName,
-                    ISNULL(fc.Met, c.DefaultMetValue) AS IsMet,
-                    fc.Reason
-                FROM Criteria c
-                LEFT JOIN Funds f ON f.Name = @FundName
-                LEFT JOIN FundCriteria fc ON c.Id = fc.CriterionId AND f.Id = fc.FundId
-                WHERE f.Name = @FundName;
-            ";
+            // This simulates a database call and business logic.
+            await Task.Delay(500); // Simulate latency
 
-            var parameters = new[]
-            {
-                new SqlParameter("@FundName", request.FundName ?? (object)DBNull.Value)
-            };
+            var isEligible = request.FundName.Contains("Tech", StringComparison.OrdinalIgnoreCase) ||
+                             request.FundName.Contains("Blue", StringComparison.OrdinalIgnoreCase);
 
-            var criteria = await _dataAccessHelper.QueryAsync(request.Environment, query, reader => new Criterion
-            {
-                Name = reader["CriterionName"].ToString(),
-                Met = Convert.ToBoolean(reader["IsMet"]),
-                Reason = reader["Reason"] != DBNull.Value ? reader["Reason"].ToString() : null
-            }, parameters);
+            var status = isEligible ? "Eligible" : "Ineligible";
 
-            if (criteria.Count == 0)
-            {
-                return new FundEligibilityResult
-                {
-                    FundName = request.FundName,
-                    Status = "Pending",
-                    Criteria = new List<Criterion> { new() { Name = "Fund Found", Met = false, Reason = "The specified fund could not be found in the database." } }
-                };
-            }
-
-            var isEligible = criteria.All(c => c.Met);
-
-            return new FundEligibilityResult
+            var result = new FundEligibilityResult
             {
                 FundName = request.FundName,
-                Status = isEligible ? "Eligible" : "Ineligible",
-                Criteria = criteria
+                Status = status,
+                Criteria = new List<Criterion>
+                {
+                    new Criterion { Name = "Minimum AUM requirement met", Met = true },
+                    new Criterion { Name = "Geographic restrictions satisfied", Met = isEligible },
+                    new Criterion { Name = "Sector exposure limits adhered to", Met = true },
+                    new Criterion
+                    {
+                        Name = $"Regulatory compliance check (Env: {request.Environment})",
+                        Met = isEligible,
+                        Reason = isEligible ? null : $"Failed compliance check in {request.Environment} environment."
+                    },
+                    new Criterion
+                    {
+                        Name = "Historical performance benchmark (5Y)",
+                        Met = !isEligible,
+                        Reason = !isEligible ? "Benchmark not met over 5 years." : null
+                    }
+                }
             };
+
+            return result;
         }
     }
 }

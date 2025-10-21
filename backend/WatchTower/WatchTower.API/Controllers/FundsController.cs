@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using WatchTower.API.Services;
 
 namespace WatchTower.API.Controllers
 {
@@ -7,23 +9,34 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class FundsController : ControllerBase
     {
-        private static readonly List<string> FundNames = new List<string>
+        private readonly IDataAccessHelper _dataAccessHelper;
+
+        public FundsController(IDataAccessHelper dataAccessHelper)
         {
-            "Global Tech Leaders Fund",
-            "Sustainable Energy Fund",
-            "Healthcare Innovation Fund",
-            "Emerging Markets Growth Fund",
-            "Real Estate Investment Trust",
-            "Blue Chip Equity Fund",
-            "Corporate Bond Fund",
-            "Index 500 Tracker",
-        };
+            _dataAccessHelper = dataAccessHelper;
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<string>> GetFunds()
+        public async Task<IActionResult> GetFundNames()
         {
-            // In a real application, this would fetch data from a database.
-            return Ok(FundNames);
+            // This simulates fetching a list of funds from the database.
+            await Task.Delay(300); 
+
+            var sampleFunds = new List<string>
+            {
+                "Global Tech Leaders Fund",
+                "Sustainable Energy Fund",
+                "Emerging Markets Growth",
+                "US Blue Chip Equity Fund",
+                "European Dividend Aristocrats",
+                "Healthcare Innovation Fund",
+                "Real Estate Investment Trust (REIT)",
+                "Asia Pacific Tigers Fund",
+                "Corporate Bond Index Fund",
+                "Small Cap Value Fund"
+            };
+
+            return Ok(sampleFunds);
         }
     }
 }
