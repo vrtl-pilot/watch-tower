@@ -75,14 +75,6 @@ const FundEligibility = () => {
     setEligibilityResult(null);
     showSuccess("Selection cleared.");
   };
-  
-  const handleOpenFundSearch = () => {
-    if (!selectedFundName.trim()) {
-      showError("Please enter a fund name or pattern to search.");
-      return;
-    }
-    setIsFundSearchOpen(true);
-  };
 
   return (
     <>
@@ -114,7 +106,7 @@ const FundEligibility = () => {
                   id="fundName"
                   value={selectedFundName}
                   onChange={(e) => setSelectedFundName(e.target.value)}
-                  placeholder="Enter fund name or pattern (e.g., *Tech*)"
+                  placeholder="Search or select a fund"
                   className="pr-10"
                 />
                 <Button
@@ -122,7 +114,7 @@ const FundEligibility = () => {
                   variant="ghost"
                   size="icon"
                   className="absolute right-1 h-7 w-7"
-                  onClick={handleOpenFundSearch}
+                  onClick={() => setIsFundSearchOpen(true)}
                 >
                   <Search className="h-4 w-4" />
                   <span className="sr-only">Search funds</span>
@@ -172,7 +164,6 @@ const FundEligibility = () => {
         open={isFundSearchOpen}
         onOpenChange={setIsFundSearchOpen}
         onSelectFund={handleSelectFund}
-        searchTerm={selectedFundName}
       />
     </>
   );
