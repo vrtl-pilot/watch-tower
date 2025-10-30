@@ -32,19 +32,27 @@ interface ServerStatusTableProps {
   onAction: (id: string, actionType: ActionType, serverName: string, serviceName: string) => void;
 }
 
-const StatusBadge = ({ status }: { status: "Running" | "Stopped" | "Down" | "Degraded" }) => (
-  <Badge
-    className={cn(
-      "text-white",
-      status === "Running" && "bg-green-600 hover:bg-green-600/80",
-      status === "Stopped" && "bg-red-600 hover:bg-red-600/80",
-      status === "Down" && "bg-yellow-500 hover:bg-yellow-500/80",
-      status === "Degraded" && "bg-orange-500 hover:bg-orange-500/80" // New color for Degraded
-    )}
-  >
-    {status}
-  </Badge>
-);
+const StatusBadge = ({ status }: { status: string | number }) => {
+  // Normalize status to string for display
+  const normalizedStatus = typeof status === "number"
+    ? (status === 0 ? "Running" : status === 1 ? "Stopped" : status === 2 ? "Degraded" : status === 3 ? "Down" : "Unknown")
+    : status;
+
+  return (
+    <Badge
+      className={cn(
+        "text-white",
+        normalizedStatus === "Running" && "bg-green-600 hover:bg-green-600/80",
+        normalizedStatus === "Stopped" && "bg-red-600 hover:bg-red-600/80",
+        normalizedStatus === "Down" && "bg-yellow-500 hover:bg-yellow-500/80",
+        normalizedStatus === "Degraded" && "bg-orange-500 hover:bg-orange-500/80",
+        normalizedStatus === "Unknown" && "bg-gray-500 hover:bg-gray-500/80"
+      )}
+    >
+      {normalizedStatus}
+    </Badge>
+  );
+};
 
 export const ServerStatusTable = ({ data, onAction }: ServerStatusTableProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);

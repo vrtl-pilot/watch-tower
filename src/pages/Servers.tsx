@@ -11,7 +11,7 @@ import { ServerStatusTable } from "@/components/ServerStatusTable";
 import { showError, showLoading } from "@/utils/toast";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 import { useMigrationStore } from "@/hooks/use-migration-store";
-import { ServerItem } from "@/lib/server-status-utils";
+import { ServerItem, formatServerStatuses, formatServerStatus } from "@/lib/server-status-utils";
 import { Loader2 } from "lucide-react";
 
 const Servers = () => {
@@ -55,8 +55,11 @@ const Servers = () => {
           throw new Error('Failed to fetch server data');
         }
 
-        // API now returns string statuses
-        const allServers: ServerItem[] = await response.json();
+        // API may return numeric or string statuses - formatServerStatuses handles both
+        const rawServers: ServerItem[] = await response.json();
+        console.log("Fetched server data from API:", rawServers);
+
+        const allServers = formatServerStatuses(rawServers);
 
         setWebApiData(allServers.filter(s => s.service === "Web API"));
         setWorkerData(allServers.filter(s => s.service === "Worker Service"));
@@ -75,9 +78,11 @@ const Servers = () => {
   // Effect to listen for SignalR updates
   useEffect(() => {
     if (connection) {
-      // The backend is now configured to send string statuses via SignalR
+      // The backend may send numeric or string statuses via SignalR - formatServerStatus handles both
       const handler = (updatedServer: ServerItem) => {
-        updateServerData(updatedServer);
+        console.log("Received server update via SignalR:", updatedServer);
+        const formattedServer = formatServerStatus(updatedServer);
+        updateServerData(formattedServer);
         // The toast dismissal and success notification are handled in useMigrationStore
       };
 
