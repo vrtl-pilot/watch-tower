@@ -1,11 +1,15 @@
 // C# Enum Mappings are now handled by backend JSON serialization.
 
+// These types must match the C# enum names serialized as strings: Running, Stopped, Degraded, Down
+export type ServerStatusString = "Running" | "Stopped" | "Degraded";
+export type ServiceStatusString = "Running" | "Stopped" | "Down" | "Degraded";
+
 export interface ServerItem {
   id: string;
   serverName: string;
   service: string;
-  serverStatus: "Running" | "Stopped" | "Degraded";
-  serviceStatus: "Running" | "Stopped" | "Down" | "Degraded";
+  serverStatus: ServerStatusString;
+  serviceStatus: ServiceStatusString;
 }
 
 /**
