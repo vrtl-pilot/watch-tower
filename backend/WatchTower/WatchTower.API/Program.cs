@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Configure JSON serialization to use string converters for enums
+        // Configure JSON serialization to use string converters for enums (for REST API)
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
@@ -20,8 +20,12 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "WatchTower API", Version = "v1" });
 });
 
-// Add SignalR
-builder.Services.AddSignalR();
+// Add SignalR and configure its JSON serialization to use string converters for enums
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Register application services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
