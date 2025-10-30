@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using WatchTower.API.Services;
 using WatchTower.Shared.Models;
+using System.Threading.Tasks;
 
 namespace WatchTower.API.Controllers
 {
@@ -16,12 +16,16 @@ namespace WatchTower.API.Controllers
             _fundEligibilityService = fundEligibilityService;
         }
 
+        /// <summary>
+        /// Checks the eligibility of a fund against various criteria for a specific environment.
+        /// </summary>
         [HttpPost("check")]
+        [ProducesResponseType(typeof(FundEligibilityResult), 200)]
         public async Task<IActionResult> CheckEligibility([FromBody] FundEligibilityRequest request)
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.FundName))
+            if (string.IsNullOrEmpty(request.FundName))
             {
-                return BadRequest("Fund name is required.");
+                return BadRequest(new { message = "FundName is required." });
             }
 
             var result = await _fundEligibilityService.CheckEligibilityAsync(request);

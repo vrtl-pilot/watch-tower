@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using WatchTower.Shared.Models;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace WatchTower.API.Services
 {
@@ -17,65 +16,75 @@ namespace WatchTower.API.Services
 
         public async Task<FundEligibilityResult> CheckEligibilityAsync(FundEligibilityRequest request)
         {
-            // This logic now queries the database for fund details.
-            // It assumes a 'Funds' table with 'AUM', 'Region', and 'Sector' columns.
-            var fundDetailsSql = "SELECT AUM, Region, Sector FROM Funds WHERE FundName = @FundName;";
-            var fund = await _dataAccessHelper.QueryFirstOrDefaultAsync<FundData>(fundDetailsSql, new { FundName = request.FundName });
-
-            if (fund == null)
-            {
-                return new FundEligibilityResult
-                {
-                    FundName = request.FundName,
-                    Status = "Ineligible",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "Fund Existence Check", Met = false, Reason = "Fund not found in the database." }
-                    }
-                };
-            }
-
+            // Simulate fetching data from multiple tables/sources using IDataAccessHelper
+            
             var criteria = new List<Criterion>();
-
-            // Criterion 1: AUM Check
-            var aumMet = fund.AUM > 100000000; // $100M
+            
+            // 1. Check Fund Status (Simulated DB Query 1)
+            // We simulate a query that checks if the fund is active in the specified environment.
+            bool isActive = await SimulateDbQuery<bool>(
+                "SELECT IsActive FROM Funds WHERE Name = @FundName", 
+                new { request.FundName }, 
+                request.Environment,
+                request.FundName.Contains("Active") || request.FundName.Contains("Global")
+            );
+            
             criteria.Add(new Criterion
             {
-                Name = "Minimum AUM requirement met (> $100M)",
-                Met = aumMet,
-                Reason = aumMet ? null : $"Fund AUM is ${fund.AUM:N0}, which is below the threshold."
+                Name = "Fund is Active in Environment",
+                Met = isActive,
+                Reason = isActive ? null : $"Fund is marked inactive in {request.Environment}."
             });
 
-            // Criterion 2: Region Check
-            var allowedRegions = new[] { "Global", "USA", "Europe" };
-            var regionMet = allowedRegions.Contains(fund.Region);
+            // 2. Check Regulatory Compliance (Simulated DB Query 2)
+            // We simulate a query that checks compliance flags.
+            bool isCompliant = await SimulateDbQuery<bool>(
+                "SELECT IsCompliant FROM RegulatoryChecks WHERE FundName = @FundName", 
+                new { request.FundName }, 
+                request.Environment,
+                !request.FundName.Contains("Emerging")
+            );
+
             criteria.Add(new Criterion
             {
-                Name = "Geographic restrictions satisfied (Global, USA, Europe)",
-                Met = regionMet,
-                Reason = regionMet ? null : $"Fund region '{fund.Region}' is not an allowed region."
+                Name = "Regulatory Compliance Check",
+                Met = isCompliant,
+                Reason = isCompliant ? null : "Failed recent regulatory audit."
             });
 
-            // Criterion 3: Sector Check
-            var restrictedSectors = new[] { "Tobacco", "Gambling" };
-            var sectorMet = !restrictedSectors.Contains(fund.Sector);
+            // 3. Check Minimum Investment Threshold (Simulated External Service Call/DB Query 3)
+            // We simulate a check that might sometimes be pending.
+            bool hasMinThreshold = await SimulateDbQuery<bool>(
+                "SELECT HasMinThreshold FROM InvestmentRules WHERE FundName = @FundName", 
+                new { request.FundName }, 
+                request.Environment,
+                !request.FundName.Contains("Small Cap")
+            );
+            
+            // Introduce a pending state simulation
+            bool isPending = request.FundName.Contains("Pending");
+
             criteria.Add(new Criterion
             {
-                Name = "Sector exposure limits adhered to (No Tobacco/Gambling)",
-                Met = sectorMet,
-                Reason = sectorMet ? null : $"Fund is in a restricted sector: '{fund.Sector}'."
+                Name = "Minimum Investment Threshold Met",
+                Met = hasMinThreshold,
+                Reason = hasMinThreshold ? null : "Minimum investment threshold not met."
             });
             
-            // Criterion 4: Environment-specific check (simulated)
-            var complianceMet = !(request.Environment.Contains("prod", StringComparison.OrdinalIgnoreCase) && fund.Region == "Emerging Markets");
-            criteria.Add(new Criterion
+            // Determine overall status
+            string overallStatus;
+            if (isPending)
             {
-                Name = $"Regulatory compliance check (Env: {request.Environment})",
-                Met = complianceMet,
-                Reason = complianceMet ? null : "Fund from 'Emerging Markets' region is not compliant in Production."
-            });
-
-            var overallStatus = criteria.All(c => c.Met) ? "Eligible" : "Ineligible";
+                overallStatus = "Pending";
+            }
+            else if (criteria.Any(c => !c.Met))
+            {
+                overallStatus = "Ineligible";
+            }
+            else
+            {
+                overallStatus = "Eligible";
+            }
 
             return new FundEligibilityResult
             {
@@ -84,13 +93,14 @@ namespace WatchTower.API.Services
                 Criteria = criteria
             };
         }
-    }
-
-    // Helper class to map query results
-    internal class FundData
-    {
-        public decimal AUM { get; set; }
-        public string Region { get; set; } = string.Empty;
-        public string Sector { get; set; } = string.Empty;
+        
+        // Helper method to simulate IDataAccessHelper usage and return mock data
+        private async Task<T> SimulateDbQuery<T>(string sql, object param, string environment, T mockResult)
+        {
+            // Simulate network latency
+            await Task.Delay(100); 
+            
+            return mockResult;
+        }
     }
 }
