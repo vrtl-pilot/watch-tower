@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
+using Dapper;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
 
 namespace WatchTower.API.Services
 {
@@ -14,27 +12,12 @@ namespace WatchTower.API.Services
             _dbConnectionFactory = dbConnectionFactory;
         }
 
-        public async Task<List<T>> QueryAsync<T>(string environment, string query, Func<SqlDataReader, T> map, params SqlParameter[] parameters)
+        public async Task<T> QueryFirstOrDefaultAsync<T>(string environment, string sql, object? parameters = null)
         {
-            var items = new List<T>();
-
-            await using var connection = _dbConnectionFactory.CreateConnection(environment);
-            await connection.OpenAsync();
-
-            await using var command = new SqlCommand(query, connection);
-            if (parameters != null)
+            using (var connection = _dbConnectionFactory.GetConnection(environment))
             {
-                command.Parameters.AddRange(parameters);
+                return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters);
             }
-
-            await using var reader = await command.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
-            {
-                items.Add(map(reader));
-            }
-
-            return items;
         }
     }
 }

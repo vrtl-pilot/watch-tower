@@ -1,36 +1,32 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
-using Microsoft.AspNetCore.SignalR;
-using System.Text.Json.Serialization; // Required for JsonStringEnumConverter
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Configure MVC/API controllers to serialize enums as strings
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
-// Add SignalR and configure its JSON serialization
-builder.Services.AddSignalR()
-    .AddJsonProtocol(options =>
-    {
-        // Configure SignalR to serialize enums as strings
-        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+// Add CORS policy to allow communication with the Vite frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowViteDev",
+        builder => builder
+            .WithOrigins("http://localhost:8080") // Vite dev server URL
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
 
-// Add custom services
+// Register custom application services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
+builder.Services.AddScoped<IFundService, FundService>();
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-builder.Services.AddScoped<IRedisService, RedisService>();
+builder.Services.AddSingleton<IRedisService, RedisService>();
+
 
 var app = builder.Build();
 
@@ -43,11 +39,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Enable CORS
+app.UseCors("AllowViteDev");
+
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Map SignalR Hub
 app.MapHub<WatchTowerHub>("/watchtowerhub");
 
 app.Run();
