@@ -1,23 +1,35 @@
-using Dapper;
+using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
+using Dapper;
 
 namespace WatchTower.API.Services
 {
     public class DataAccessHelper : IDataAccessHelper
     {
-        private readonly IDbConnectionFactory _dbConnectionFactory;
+        private readonly IDbConnectionFactory _connectionFactory;
 
-        public DataAccessHelper(IDbConnectionFactory dbConnectionFactory)
+        public DataAccessHelper(IDbConnectionFactory connectionFactory)
         {
-            _dbConnectionFactory = dbConnectionFactory;
+            _connectionFactory = connectionFactory;
         }
 
-        public async Task<T> QueryFirstOrDefaultAsync<T>(string environment, string sql, object? parameters = null)
+        public async Task<IEnumerable<T>> QueryAsync<T>(string sql, object param = null, string environment = "production")
         {
-            using (var connection = _dbConnectionFactory.GetConnection(environment))
-            {
-                return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters);
-            }
+            using IDbConnection connection = _connectionFactory.GetConnection(environment);
+            return await connection.QueryAsync<T>(sql, param);
+        }
+
+        public async Task<T> QuerySingleOrDefaultAsync<T>(string sql, object param = null, string environment = "production")
+        {
+            using IDbConnection connection = _connectionFactory.GetConnection(environment);
+            return await connection.QuerySingleOrDefaultAsync<T>(sql, param);
+        }
+
+        public async Task<int> ExecuteAsync(string sql, object param = null, string environment = "production")
+        {
+            using IDbConnection connection = _connectionFactory.GetConnection(environment);
+            return await connection.ExecuteAsync(sql, param);
         }
     }
 }

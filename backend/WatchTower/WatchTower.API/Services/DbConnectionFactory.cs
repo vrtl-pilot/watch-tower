@@ -1,6 +1,6 @@
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System;
 
 namespace WatchTower.API.Services
 {
@@ -13,28 +13,20 @@ namespace WatchTower.API.Services
             _configuration = configuration;
         }
 
-        public SqlConnection CreateConnection(string environment)
+        public IDbConnection GetConnection(string environment)
         {
-            var connectionString = GetConnectionString(environment);
+            // Map environment string (e.g., "development") to ConnectionStrings key (e.g., "DevelopmentDb")
+            // Ensure the first letter is capitalized to match the appsettings.json keys (e.g., DevelopmentDb)
+            string connectionStringKey = $"{char.ToUpper(environment[0])}{environment.Substring(1)}Db";
+            
+            var connectionString = _configuration.GetConnectionString(connectionStringKey);
+
             if (string.IsNullOrEmpty(connectionString))
             {
-                throw new ArgumentException("Invalid environment specified or connection string not found.");
+                throw new InvalidOperationException($"Connection string for environment '{environment}' (key: {connectionStringKey}) not found.");
             }
-            return new SqlConnection(connectionString);
-        }
 
-        private string GetConnectionString(string? environment)
-        {
-            return environment?.ToLower() switch
-            {
-                "development" => _configuration.GetConnectionString("DevelopmentDb"),
-                "test01" => _configuration.GetConnectionString("Test01Db"),
-                "test02" => _configuration.GetConnectionString("Test02Db"),
-                "qa01" => _configuration.GetConnectionString("QA01Db"),
-                "qa02" => _configuration.GetConnectionString("QA02Db"),
-                "production" => _configuration.GetConnectionString("ProductionDb"),
-                _ => _configuration.GetConnectionString("DevelopmentDb") // Default to Development
-            };
+            return new SqlConnection(connectionString);
         }
     }
 }

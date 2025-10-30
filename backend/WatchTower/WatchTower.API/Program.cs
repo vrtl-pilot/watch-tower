@@ -1,31 +1,38 @@
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
-
-// Add CORS policy to allow communication with the Vite frontend
-builder.Services.AddCors(options =>
+builder.Services.AddSwaggerGen(c =>
 {
-    options.AddPolicy("AllowViteDev",
-        builder => builder
-            .WithOrigins("http://localhost:8080") // Vite dev server URL
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WatchTower API", Version = "v1" });
 });
 
-// Register custom application services
+// Add SignalR
+builder.Services.AddSignalR();
+
+// Register application services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
 builder.Services.AddScoped<IFundService, FundService>();
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-builder.Services.AddSingleton<IRedisService, RedisService>();
+builder.Services.AddScoped<IRedisService, RedisService>();
+
+// Configure CORS for development/proxy setup
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy",
+        builder => builder
+            .WithOrigins("http://localhost:8080", "https://localhost:7179") // Allow frontend URL and self
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+});
 
 
 var app = builder.Build();
@@ -34,17 +41,21 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WatchTower API V1");
+    });
 }
 
 app.UseHttpsRedirection();
 
-// Enable CORS
-app.UseCors("AllowViteDev");
+app.UseCors("CorsPolicy"); // Use CORS policy
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
 app.MapHub<WatchTowerHub>("/watchtowerhub");
 
 app.Run();

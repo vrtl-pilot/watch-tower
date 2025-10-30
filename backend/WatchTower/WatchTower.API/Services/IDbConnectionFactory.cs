@@ -1,9 +1,9 @@
-using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace WatchTower.API.Services
 {
     public interface IDbConnectionFactory
     {
-        SqlConnection CreateConnection(string environment);
+        IDbConnection GetConnection(string environment);
     }
 }
