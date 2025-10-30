@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
 using Microsoft.AspNetCore.SignalR;

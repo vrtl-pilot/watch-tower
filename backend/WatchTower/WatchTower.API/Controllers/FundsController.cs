@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+using WatchTower.API.Services;
 
 namespace WatchTower.API.Controllers
 {
@@ -7,23 +8,25 @@ namespace WatchTower.API.Controllers
     [Route("api/[controller]")]
     public class FundsController : ControllerBase
     {
-        private static readonly List<string> FundNames = new List<string>
+        private readonly IFundService _fundService;
+
+        public FundsController(IFundService fundService)
         {
-            "Global Tech Leaders Fund",
-            "Sustainable Energy Fund",
-            "Healthcare Innovation Fund",
-            "Emerging Markets Growth Fund",
-            "Real Estate Investment Trust",
-            "Blue Chip Equity Fund",
-            "Corporate Bond Fund",
-            "Index 500 Tracker",
-        };
+            _fundService = fundService;
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<string>> GetFunds()
+        public async Task<IActionResult> GetFundNames([FromQuery] string? searchPattern)
         {
-            // In a real application, this would fetch data from a database.
-            return Ok(FundNames);
+            try
+            {
+                var funds = await _fundService.GetFundNamesAsync(searchPattern);
+                return Ok(funds);
+            }
+            catch (System.Exception)
+            {
+                return StatusCode(500, "An error occurred while fetching fund names.");
+            }
         }
     }
 }

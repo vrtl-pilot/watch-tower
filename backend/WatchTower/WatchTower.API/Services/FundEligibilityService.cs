@@ -1,9 +1,8 @@
-using Microsoft.Data.SqlClient;
-using WatchTower.Shared.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using WatchTower.Shared.Models;
+using System.Linq;
 
 namespace WatchTower.API.Services
 {
@@ -18,48 +17,80 @@ namespace WatchTower.API.Services
 
         public async Task<FundEligibilityResult> CheckEligibilityAsync(FundEligibilityRequest request)
         {
-            // IMPORTANT: This is a placeholder query. You should replace it with your actual query.
-            const string query = @"
-                SELECT 
-                    c.Name AS CriterionName,
-                    ISNULL(fc.Met, c.DefaultMetValue) AS IsMet,
-                    fc.Reason
-                FROM Criteria c
-                LEFT JOIN Funds f ON f.Name = @FundName
-                LEFT JOIN FundCriteria fc ON c.Id = fc.CriterionId AND f.Id = fc.FundId
-                WHERE f.Name = @FundName;
-            ";
+            // This logic now queries the database for fund details.
+            // It assumes a 'Funds' table with 'AUM', 'Region', and 'Sector' columns.
+            var fundDetailsSql = "SELECT AUM, Region, Sector FROM Funds WHERE FundName = @FundName;";
+            var fund = await _dataAccessHelper.QueryFirstOrDefaultAsync<FundData>(fundDetailsSql, new { FundName = request.FundName });
 
-            var parameters = new[]
-            {
-                new SqlParameter("@FundName", request.FundName ?? (object)DBNull.Value)
-            };
-
-            var criteria = await _dataAccessHelper.QueryAsync(request.Environment, query, reader => new Criterion
-            {
-                Name = reader["CriterionName"].ToString(),
-                Met = Convert.ToBoolean(reader["IsMet"]),
-                Reason = reader["Reason"] != DBNull.Value ? reader["Reason"].ToString() : null
-            }, parameters);
-
-            if (criteria.Count == 0)
+            if (fund == null)
             {
                 return new FundEligibilityResult
                 {
                     FundName = request.FundName,
-                    Status = "Pending",
-                    Criteria = new List<Criterion> { new() { Name = "Fund Found", Met = false, Reason = "The specified fund could not be found in the database." } }
+                    Status = "Ineligible",
+                    Criteria = new List<Criterion>
+                    {
+                        new Criterion { Name = "Fund Existence Check", Met = false, Reason = "Fund not found in the database." }
+                    }
                 };
             }
 
-            var isEligible = criteria.All(c => c.Met);
+            var criteria = new List<Criterion>();
+
+            // Criterion 1: AUM Check
+            var aumMet = fund.AUM > 100000000; // $100M
+            criteria.Add(new Criterion
+            {
+                Name = "Minimum AUM requirement met (> $100M)",
+                Met = aumMet,
+                Reason = aumMet ? null : $"Fund AUM is ${fund.AUM:N0}, which is below the threshold."
+            });
+
+            // Criterion 2: Region Check
+            var allowedRegions = new[] { "Global", "USA", "Europe" };
+            var regionMet = allowedRegions.Contains(fund.Region);
+            criteria.Add(new Criterion
+            {
+                Name = "Geographic restrictions satisfied (Global, USA, Europe)",
+                Met = regionMet,
+                Reason = regionMet ? null : $"Fund region '{fund.Region}' is not an allowed region."
+            });
+
+            // Criterion 3: Sector Check
+            var restrictedSectors = new[] { "Tobacco", "Gambling" };
+            var sectorMet = !restrictedSectors.Contains(fund.Sector);
+            criteria.Add(new Criterion
+            {
+                Name = "Sector exposure limits adhered to (No Tobacco/Gambling)",
+                Met = sectorMet,
+                Reason = sectorMet ? null : $"Fund is in a restricted sector: '{fund.Sector}'."
+            });
+            
+            // Criterion 4: Environment-specific check (simulated)
+            var complianceMet = !(request.Environment.Contains("prod", StringComparison.OrdinalIgnoreCase) && fund.Region == "Emerging Markets");
+            criteria.Add(new Criterion
+            {
+                Name = $"Regulatory compliance check (Env: {request.Environment})",
+                Met = complianceMet,
+                Reason = complianceMet ? null : "Fund from 'Emerging Markets' region is not compliant in Production."
+            });
+
+            var overallStatus = criteria.All(c => c.Met) ? "Eligible" : "Ineligible";
 
             return new FundEligibilityResult
             {
                 FundName = request.FundName,
-                Status = isEligible ? "Eligible" : "Ineligible",
+                Status = overallStatus,
                 Criteria = criteria
             };
         }
+    }
+
+    // Helper class to map query results
+    internal class FundData
+    {
+        public decimal AUM { get; set; }
+        public string Region { get; set; } = string.Empty;
+        public string Sector { get; set; } = string.Empty;
     }
 }
