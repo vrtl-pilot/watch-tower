@@ -16,10 +16,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
 
 // --- Other service registrations would go here ---
-// Example:
-// builder.Services.AddSingleton<IRedisService, RedisService>();
-// builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
-// builder.Services.AddScoped<IFundService, FundService>();
+builder.Services.AddSingleton<IRedisService, RedisService>();
+builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
+builder.Services.AddScoped<IFundService, FundService>();
+builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
 // -------------------------------------------------
 
 var app = builder.Build();

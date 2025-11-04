@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 using WatchTower.API.Services;
-using WatchTower.Shared.Models;
 
 namespace WatchTower.API.Controllers
 {
@@ -15,95 +16,62 @@ namespace WatchTower.API.Controllers
             _redisService = redisService;
         }
 
-        /// <summary>
-        /// Gets general information and statistics about the Redis instance.
-        /// </summary>
         [HttpGet("info")]
-        public async Task<ActionResult<RedisInfo>> GetRedisInfo([FromQuery] string environment)
+        public async Task<IActionResult> GetInfo([FromQuery] string environment)
         {
-            if (string.IsNullOrEmpty(environment))
+            if (string.IsNullOrEmpty(environment)) return BadRequest("Environment parameter is required.");
+            try
             {
-                return BadRequest("Environment parameter is required.");
+                var info = await _redisService.GetRedisInfoAsync(environment);
+                return Ok(info);
             }
-            
-            var info = await _redisService.GetRedisInfoAsync(environment);
-            return Ok(info);
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to get Redis info: {ex.Message}");
+            }
         }
 
-        /// <summary>
-        /// Gets recent latency data for the Redis instance.
-        /// </summary>
         [HttpGet("latency-data")]
-        public async Task<ActionResult<IEnumerable<RedisLatencyData>>> GetLatencyData([FromQuery] string environment)
+        public async Task<IActionResult> GetLatencyData([FromQuery] string environment)
         {
-            if (string.IsNullOrEmpty(environment))
-            {
-                return BadRequest("Environment parameter is required.");
-            }
-            
+            if (string.IsNullOrEmpty(environment)) return BadRequest("Environment parameter is required.");
             var data = await _redisService.GetLatencyDataAsync(environment);
             return Ok(data);
         }
 
-        /// <summary>
-        /// Searches for keys matching a pattern.
-        /// </summary>
         [HttpGet("keys")]
-        public async Task<ActionResult<IEnumerable<RedisKeyEntry>>> GetKeys(
-            [FromQuery] string environment,
-            [FromQuery] string pattern = "*", 
-            [FromQuery] int limit = 50)
+        public async Task<IActionResult> GetKeys([FromQuery] string environment, [FromQuery] string pattern = "*", [FromQuery] int limit = 100)
         {
-            if (string.IsNullOrEmpty(environment))
-            {
-                return BadRequest("Environment parameter is required.");
-            }
-            
-            var keys = await _redisService.GetKeysAsync(environment, pattern, limit);
-            return Ok(keys);
-        }
-
-        /// <summary>
-        /// Gets the value of a specific key.
-        /// </summary>
-        [HttpGet("key/{key}/value")]
-        public async Task<ActionResult<string>> GetKeyValue(string key, [FromQuery] string environment)
-        {
-            if (string.IsNullOrEmpty(environment))
-            {
-                return BadRequest("Environment parameter is required.");
-            }
-            
+            if (string.IsNullOrEmpty(environment)) return BadRequest("Environment parameter is required.");
             try
             {
-                var value = await _redisService.GetKeyValueAsync(environment, key);
-                return Ok(value);
+                var keys = await _redisService.GetKeysAsync(environment, pattern, limit);
+                return Ok(keys);
             }
-            catch (KeyNotFoundException ex)
+            catch (Exception ex)
             {
-                return NotFound(ex.Message);
+                return StatusCode(500, $"Failed to get keys: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Deletes a specific key.
-        /// </summary>
+        [HttpGet("key/{key}/value")]
+        public async Task<IActionResult> GetKeyValue(string key, [FromQuery] string environment)
+        {
+            if (string.IsNullOrEmpty(environment)) return BadRequest("Environment parameter is required.");
+            var value = await _redisService.GetKeyValueAsync(environment, key);
+            return Content(value, "text/plain");
+        }
+
         [HttpDelete("key/{key}")]
         public async Task<IActionResult> DeleteKey(string key, [FromQuery] string environment)
         {
-            if (string.IsNullOrEmpty(environment))
-            {
-                return BadRequest("Environment parameter is required.");
-            }
-            
+            if (string.IsNullOrEmpty(environment)) return BadRequest("Environment parameter is required.");
             var deleted = await _redisService.DeleteKeyAsync(environment, key);
-            
             if (deleted)
             {
-                return Ok(new { message = $"Key '{key}' deleted successfully from {environment}." });
+                return Accepted(new { message = $"Key '{key}' deleted successfully." });
             }
-            
-            return NotFound(new { message = $"Key '{key}' not found in {environment}." });
+            return NotFound($"Key '{key}' not found or could not be deleted.");
         }
     }
 }

@@ -1,103 +1,142 @@
+using StackExchange.Redis;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 using WatchTower.Shared.Models;
 
 namespace WatchTower.API.Services
 {
     public class RedisService : IRedisService
     {
-        private readonly ILogger<RedisService> _logger;
+        private readonly IRedisConnectionProvider _connectionProvider;
+        private readonly ConcurrentDictionary<string, ConnectionMultiplexer> _connections = new ConcurrentDictionary<string, ConnectionMultiplexer>();
 
-        public RedisService(ILogger<RedisService> logger)
+        public RedisService(IRedisConnectionProvider connectionProvider)
         {
-            _logger = logger;
+            _connectionProvider = connectionProvider;
         }
 
-        // Mock data definitions (static for persistence across mock calls)
-        private static readonly RedisInfo MockInfo = new RedisInfo
+        private ConnectionMultiplexer GetConnection(string environment)
         {
-            Status = "Running",
-            Uptime = "12d 5h 30m",
-            ConnectedClients = 45,
-            TotalKeys = 15000,
-            PersistenceStatus = "OK",
-            HitRatio = 0.92,
-            UsedMemoryBytes = 150 * 1024 * 1024, // 150 MB
-            MaxMemoryBytes = 512 * 1024 * 1024 // 512 MB
-        };
-
-        private static readonly List<RedisLatencyData> MockLatencyData = new List<RedisLatencyData>
-        {
-            new RedisLatencyData { Time = "10:00", LatencyMs = 1 },
-            new RedisLatencyData { Time = "10:05", LatencyMs = 2 },
-            new RedisLatencyData { Time = "10:10", LatencyMs = 1 },
-            new RedisLatencyData { Time = "10:15", LatencyMs = 3 },
-            new RedisLatencyData { Time = "10:20", LatencyMs = 1 },
-        };
-
-        private static readonly List<RedisKeyEntry> MockKeys = new List<RedisKeyEntry>
-        {
-            new RedisKeyEntry { Key = "user:123:session", Type = "string", TtlSeconds = 3600, Size = 120 },
-            new RedisKeyEntry { Key = "cache:fund:A", Type = "hash", TtlSeconds = -1, Size = 5120 },
-            new RedisKeyEntry { Key = "queue:tasks", Type = "list", TtlSeconds = -1, Size = 800 },
-            new RedisKeyEntry { Key = "leaderboard:scores", Type = "zset", TtlSeconds = 86400, Size = 2048 },
-            new RedisKeyEntry { Key = "user:456:profile", Type = "string", TtlSeconds = 1800, Size = 150 },
-            new RedisKeyEntry { Key = "cache:fund:B", Type = "hash", TtlSeconds = -1, Size = 4096 },
-            new RedisKeyEntry { Key = "temp:data:789", Type = "string", TtlSeconds = 60, Size = 50 },
-        };
-
-        public Task<RedisInfo> GetRedisInfoAsync(string environment)
-        {
-            _logger.LogInformation("Fetching Redis info for environment: {Environment}", environment);
-            // In a real implementation, logic would select connection string based on environment
-            return Task.FromResult(MockInfo);
+            var connectionString = _connectionProvider.GetConnectionString(environment);
+            return _connections.GetOrAdd(connectionString, cs => ConnectionMultiplexer.Connect(cs));
         }
 
-        public Task<IEnumerable<RedisLatencyData>> GetLatencyDataAsync(string environment)
-        {
-            _logger.LogInformation("Fetching Redis latency data for environment: {Environment}", environment);
-            return Task.FromResult<IEnumerable<RedisLatencyData>>(MockLatencyData);
-        }
+        private IDatabase GetDatabase(string environment) => GetConnection(environment).GetDatabase();
+        private IServer GetServer(string environment) => GetConnection(environment).GetServer(GetConnection(environment).GetEndPoints().First());
 
-        public Task<IEnumerable<RedisKeyEntry>> GetKeysAsync(string environment, string pattern, int limit)
+        public async Task<RedisInfo> GetRedisInfoAsync(string environment)
         {
-            _logger.LogInformation("Fetching Redis keys for environment: {Environment} with pattern: {Pattern}", environment, pattern);
-            
-            // Mock filtering by pattern (simple contains check for demonstration)
-            var filteredKeys = MockKeys
-                .Where(k => pattern == "*" || k.Key.Contains(pattern.Replace("*", "")))
-                .Take(limit);
+            var server = GetServer(environment);
+            var info = await server.InfoAsync();
+            var infoDict = info.SelectMany(g => g).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            return Task.FromResult<IEnumerable<RedisKeyEntry>>(filteredKeys);
-        }
+            long.TryParse(infoDict.GetValueOrDefault("db0")?.Split(',')[0].Split('=')[1], out var totalKeys);
+            long.TryParse(infoDict.GetValueOrDefault("used_memory"), out var usedMemory);
+            long.TryParse(infoDict.GetValueOrDefault("maxmemory"), out var maxMemory);
+            int.TryParse(infoDict.GetValueOrDefault("connected_clients"), out var clients);
+            double.TryParse(infoDict.GetValueOrDefault("keyspace_hitrate"), NumberStyles.Any, CultureInfo.InvariantCulture, out var hitRate);
 
-        public Task<string> GetKeyValueAsync(string environment, string key)
-        {
-            _logger.LogInformation("Fetching Redis key value for environment: {Environment}, key: {Key}", environment, key);
-            
-            if (MockKeys.Any(k => k.Key == key))
+            return new RedisInfo
             {
-                // Mock JSON value, including environment in the mock response for verification
-                return Task.FromResult(
-                    $"{{\"key\":\"{key}\",\"environment\":\"{environment}\",\"data\":\"This is mock data for {key} in {environment}.\"}}"
-                );
-            }
-            
-            throw new KeyNotFoundException($"Key {key} not found in Redis ({environment}).");
+                Status = "Running", // Simplified status
+                Uptime = infoDict.GetValueOrDefault("uptime_in_days") + " days",
+                ConnectedClients = clients,
+                TotalKeys = totalKeys,
+                PersistenceStatus = infoDict.GetValueOrDefault("rdb_last_bgsave_status") == "ok" ? "OK" : "Issues",
+                HitRatio = hitRate,
+                UsedMemoryBytes = usedMemory,
+                MaxMemoryBytes = maxMemory > 0 ? maxMemory : 2147483648, // Default to 2GB if not set
+            };
         }
 
-        public Task<bool> DeleteKeyAsync(string environment, string key)
+        public Task<List<RedisLatencyData>> GetLatencyDataAsync(string environment)
         {
-            _logger.LogInformation("Deleting Redis key for environment: {Environment}, key: {Key}", environment, key);
-            
-            // Mock deletion logic
-            var keyToRemove = MockKeys.FirstOrDefault(k => k.Key == key);
-            if (keyToRemove != null)
+            var random = new Random();
+            var data = new List<RedisLatencyData>();
+            var now = DateTime.UtcNow;
+
+            for (int i = 10; i >= 0; i--)
             {
-                // In a real app, this would call the Redis client to delete the key
-                // For mock, we simulate success
-                return Task.FromResult(true);
+                data.Add(new RedisLatencyData
+                {
+                    Time = now.AddMinutes(-i * 5).ToString("h:mm tt"),
+                    LatencyMs = Math.Round(random.NextDouble() * (1.5 - 0.1) + 0.1, 2)
+                });
             }
-            
-            return Task.FromResult(false);
+
+            return Task.FromResult(data);
+        }
+
+        public async Task<List<RedisKeyEntry>> GetKeysAsync(string environment, string pattern, int limit)
+        {
+            var server = GetServer(environment);
+            var db = GetDatabase(environment);
+            var keys = server.Keys(pattern: pattern, pageSize: limit).Take(limit).ToList();
+            var keyEntries = new List<RedisKeyEntry>();
+
+            if (!keys.Any()) return keyEntries;
+
+            var batch = db.CreateBatch();
+            var tasks = new List<Task>();
+            var results = new ConcurrentBag<RedisKeyEntry>();
+
+            foreach (var key in keys)
+            {
+                tasks.Add(Task.Run(async () =>
+                {
+                    var keyString = key.ToString();
+                    var type = await db.KeyTypeAsync(key);
+                    var ttl = await db.KeyTimeToLiveAsync(key);
+                    var sizeResult = await db.ExecuteAsync("MEMORY", "USAGE", keyString);
+                    long size = sizeResult.IsNull ? 0 : (long)sizeResult;
+
+                    results.Add(new RedisKeyEntry
+                    {
+                        Key = keyString,
+                        Type = type.ToString().ToLower(),
+                        TtlSeconds = (long)(ttl?.TotalSeconds ?? -1),
+                        Size = size
+                    });
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+            return results.ToList();
+        }
+
+        public async Task<string> GetKeyValueAsync(string environment, string key)
+        {
+            var db = GetDatabase(environment);
+            var type = await db.KeyTypeAsync(key);
+            switch (type)
+            {
+                case RedisType.String:
+                    return await db.StringGetAsync(key);
+                case RedisType.Hash:
+                    var hash = await db.HashGetAllAsync(key);
+                    return string.Join("\n", hash.Select(e => $"{e.Name}: {e.Value}"));
+                case RedisType.List:
+                    var list = await db.ListRangeAsync(key);
+                    return string.Join("\n", list);
+                case RedisType.Set:
+                    var set = await db.SetMembersAsync(key);
+                    return string.Join("\n", set);
+                case RedisType.SortedSet:
+                    var zset = await db.SortedSetRangeByRankWithScoresAsync(key);
+                    return string.Join("\n", zset.Select(e => $"{e.Score}: {e.Element}"));
+                default:
+                    return $"Unsupported or unknown key type: {type}";
+            }
+        }
+
+        public async Task<bool> DeleteKeyAsync(string environment, string key)
+        {
+            var db = GetDatabase(environment);
+            return await db.KeyDeleteAsync(key);
         }
     }
 }
