@@ -15,6 +15,7 @@ import MigrationDecoder from "./pages/MigrationDecoder";
 import JsonFormatter from "./pages/JsonFormatter";
 import Settings from "./pages/Settings";
 import Redis from "./pages/Redis";
+import ClearInvalidRequests from "./pages/ClearInvalidRequests";
 import { useMigrationStore } from "./hooks/use-migration-store";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => {
               <Route path="/requests" element={<Requests />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/redis" element={<Redis />} />
+              <Route path="/clear-invalid-requests" element={<ClearInvalidRequests />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
