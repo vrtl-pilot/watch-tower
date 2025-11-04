@@ -62,7 +62,7 @@ namespace WatchTower.API.Controllers
         }
 
         [HttpPost("action")]
-        public async Task<IActionResult> PerformServerAction([FromBody] ServerActionRequest request)
+        public IActionResult PerformServerAction([FromBody] ServerActionRequest request)
         {
             var server = _servers.FirstOrDefault(s => s.Id == request.Id);
             if (server == null)
@@ -75,36 +75,10 @@ namespace WatchTower.API.Controllers
             {
                 await Task.Delay(2000); // Simulate processing time
 
-                // Simulate status change based on action
-                switch (request.ActionType)
+                if (!TryApplyAction(server, request.ActionType))
                 {
-                    case "startServer":
-                        server.ServerStatus = ServerStatus.Running;
-                        server.ServiceStatus = ServiceStatus.Running;
-                        break;
-                    case "stopServer":
-                        server.ServerStatus = ServerStatus.Stopped;
-                        server.ServiceStatus = ServiceStatus.Stopped;
-                        break;
-                    case "restartServer":
-                        server.ServerStatus = ServerStatus.Running;
-                        server.ServiceStatus = ServiceStatus.Running;
-                        break;
-                    case "startService":
-                        server.ServiceStatus = ServiceStatus.Running;
-                        break;
-                    case "stopService":
-                        server.ServiceStatus = ServiceStatus.Stopped;
-                        break;
-                    case "restartService":
-                        server.ServiceStatus = ServiceStatus.Running;
-                        break;
-                    case "resumeService":
-                        server.ServiceStatus = ServiceStatus.Running;
-                        break;
-                    default:
-                        await _hubContext.Clients.All.SendAsync("ReceiveServerActionFailure", server.Id, $"Unknown action type: {request.ActionType}");
-                        return;
+                    await _hubContext.Clients.All.SendAsync("ReceiveServerActionFailure", server.Id, $"Unknown action type: {request.ActionType}");
+                    return;
                 }
 
                 // Notify clients of the update
@@ -113,6 +87,32 @@ namespace WatchTower.API.Controllers
 
             // Return 202 Accepted immediately
             return Accepted(new { message = $"Action '{request.ActionType}' initiated for server {server.ServerName}." });
+        }
+
+        private bool TryApplyAction(Server server, string actionType)
+        {
+            switch (actionType)
+            {
+                case "startServer":
+                case "restartServer":
+                    server.ServerStatus = ServerStatus.Running;
+                    server.ServiceStatus = ServiceStatus.Running;
+                    return true;
+                case "stopServer":
+                    server.ServerStatus = ServerStatus.Stopped;
+                    server.ServiceStatus = ServiceStatus.Stopped;
+                    return true;
+                case "startService":
+                case "restartService":
+                case "resumeService":
+                    server.ServiceStatus = ServiceStatus.Running;
+                    return true;
+                case "stopService":
+                    server.ServiceStatus = ServiceStatus.Stopped;
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }
