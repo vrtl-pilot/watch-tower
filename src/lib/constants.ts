@@ -9,4 +9,4 @@ export const ENVIRONMENTS = [
 
 export type Environment = (typeof ENVIRONMENTS)[number];
 
-export const DEFAULT_ENVIRONMENT: Environment = "Production";
+export const DEFAULT_ENVIRONMENT: Environment = "Development";
