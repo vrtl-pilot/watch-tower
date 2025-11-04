@@ -1,9 +1,10 @@
 # Tech Stack
 
-- You are building a React application.
+- You are building a React + C# application.
 - Use TypeScript.
 - Use React Router. KEEP the routes in src/App.tsx
 - Always put source code in the src folder.
+- C# code in "backend" folder
 - Put pages into src/pages/
 - Put components into src/components/
 - The main page (default page) is src/pages/Index.tsx

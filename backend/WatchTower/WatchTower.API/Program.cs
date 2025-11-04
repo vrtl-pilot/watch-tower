@@ -1,50 +1,26 @@
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.OpenApi.Models;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // Configure JSON serialization to use string converters for enums (for REST API)
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WatchTower API", Version = "v1" });
-});
+builder.Services.AddSwaggerGen();
 
-// Add SignalR and configure its JSON serialization to use string converters for enums
-builder.Services.AddSignalR()
-    .AddJsonProtocol(options =>
-    {
-        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+// This is a new service to read Redis connection strings from appsettings.json
+// It can be injected into other services like RedisService.
+builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
 
-// Register application services
-builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
-builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
-builder.Services.AddScoped<IFundService, FundService>();
-builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-builder.Services.AddScoped<IRedisService, RedisService>();
-
-// Configure CORS for development/proxy setup
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("CorsPolicy",
-        builder => builder
-            .WithOrigins("http://localhost:8080", "https://localhost:7179") // Allow frontend URL and self
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials());
-});
-
+// --- Other service registrations would go here ---
+// Example:
+// builder.Services.AddSingleton<IRedisService, RedisService>();
+// builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
+// builder.Services.AddScoped<IFundService, FundService>();
+// -------------------------------------------------
 
 var app = builder.Build();
 
@@ -52,21 +28,16 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WatchTower API V1");
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-app.UseCors("CorsPolicy"); // Use CORS policy
+app.UseRouting();
 
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Map SignalR Hub
 app.MapHub<WatchTowerHub>("/watchtowerhub");
 
 app.Run();
