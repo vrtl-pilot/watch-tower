@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-interface EligibilityResult {
+// Renamed from EligibilityResult to FundCriteriaResult to match backend model
+interface FundCriteriaResult {
   fundName: string;
   status: 'Eligible' | 'Ineligible' | 'Pending';
   criteria: {
@@ -14,7 +15,8 @@ interface EligibilityResult {
 }
 
 interface EligibilityDisplayProps {
-  result: EligibilityResult;
+  companyName: string;
+  result: FundCriteriaResult;
 }
 
 const statusMap = {
@@ -23,13 +25,13 @@ const statusMap = {
   Pending: { icon: Clock, color: "bg-yellow-600 hover:bg-yellow-600/80", text: "text-yellow-500" },
 };
 
-export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
+export const EligibilityDisplay = ({ companyName, result }: EligibilityDisplayProps) => {
   const { icon: StatusIcon, color: statusColor } = statusMap[result.status];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg shadow-sm bg-background">
-        <h3 className="text-xl font-semibold mb-2 sm:mb-0">Overall Status</h3>
+    <div className="space-y-4 p-4 border rounded-lg shadow-sm bg-background">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3">
+        <h3 className="text-xl font-semibold mb-2 sm:mb-0">{companyName}</h3>
         <Badge
           className={cn(
             "text-white font-bold px-3 py-1.5 flex items-center gap-2",
@@ -41,11 +43,11 @@ export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
         </Badge>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Criteria Breakdown</CardTitle>
+      <Card className="border-none shadow-none">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-base font-medium">Criteria Breakdown</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="p-0 space-y-2">
           {result.criteria.map((criterion, index) => {
             const Icon = criterion.met ? CheckCircle : XCircle;
             const iconColor = criterion.met ? "text-green-500" : "text-red-500";
@@ -55,10 +57,10 @@ export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
               <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b last:border-b-0 py-2">
                 <div className="flex items-center gap-3 flex-1">
                   <Icon className={cn("h-5 w-5 flex-shrink-0", iconColor)} />
-                  <p className={cn("font-medium", textColor)}>{criterion.name}</p>
+                  <p className={cn("font-medium text-sm", textColor)}>{criterion.name}</p>
                 </div>
                 {!criterion.met && criterion.reason && (
-                  <p className="text-sm text-muted-foreground mt-1 sm:mt-0 sm:ml-4 sm:text-right max-w-full sm:max-w-xs">
+                  <p className="text-xs text-muted-foreground mt-1 sm:mt-0 sm:ml-4 sm:text-right max-w-full sm:max-w-xs">
                     Reason: {criterion.reason}
                   </p>
                 )}

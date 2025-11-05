@@ -16,7 +16,8 @@ import { showSuccess, showError } from "@/utils/toast";
 import { EligibilityDisplay } from "@/components/EligibilityDisplay";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
-interface EligibilityResult {
+// New TypeScript interfaces matching the updated C# models
+interface FundCriteriaResult {
   fundName: string;
   status: 'Eligible' | 'Ineligible' | 'Pending';
   criteria: {
@@ -26,17 +27,22 @@ interface EligibilityResult {
   }[];
 }
 
+interface FundEligibilityResponse {
+  // Key: Company Name, Value: FundCriteriaResult
+  companyResults: Record<string, FundCriteriaResult>;
+}
+
 const FundEligibility = () => {
   const [selectedFundName, setSelectedFundName] = useState("");
   const [isFundSearchOpen, setIsFundSearchOpen] = useState(false);
-  const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
+  const [eligibilityResponse, setEligibilityResponse] = useState<FundEligibilityResponse | null>(null);
   const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectFund = (fundName: string) => {
     setSelectedFundName(fundName);
     setIsFundSearchOpen(false);
-    setEligibilityResult(null); // Clear previous results when a new fund is selected
+    setEligibilityResponse(null); // Clear previous results when a new fund is selected
     showSuccess(`Fund selected: ${fundName}`);
   };
 
@@ -44,7 +50,7 @@ const FundEligibility = () => {
     if (!selectedFundName) return;
 
     setIsLoading(true);
-    setEligibilityResult(null);
+    setEligibilityResponse(null);
 
     try {
       const response = await fetch('/api/fundeligibility/check', {
@@ -59,9 +65,11 @@ const FundEligibility = () => {
         throw new Error('Failed to check eligibility.');
       }
 
-      const result: EligibilityResult = await response.json();
-      setEligibilityResult(result);
-      showSuccess(`Eligibility check completed for ${result.fundName}. Status: ${result.status}`);
+      const result: FundEligibilityResponse = await response.json();
+      setEligibilityResponse(result);
+      
+      const companyCount = Object.keys(result.companyResults).length;
+      showSuccess(`Eligibility check completed for ${selectedFundName} across ${companyCount} company(s).`);
     } catch (error) {
       console.error("Error checking eligibility:", error);
       showError("An error occurred while checking eligibility.");
@@ -72,9 +80,11 @@ const FundEligibility = () => {
 
   const handleClear = () => {
     setSelectedFundName("");
-    setEligibilityResult(null);
+    setEligibilityResponse(null);
     showSuccess("Selection cleared.");
   };
+
+  const companyResultsArray = eligibilityResponse ? Object.entries(eligibilityResponse.companyResults) : [];
 
   return (
     <>
@@ -126,7 +136,7 @@ const FundEligibility = () => {
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Check Eligibility
               </Button>
-              <Button variant="outline" onClick={handleClear} disabled={!selectedFundName && !eligibilityResult}>
+              <Button variant="outline" onClick={handleClear} disabled={!selectedFundName && !eligibilityResponse}>
                 <X className="h-4 w-4 mr-2" /> Clear
               </Button>
             </div>
@@ -137,7 +147,7 @@ const FundEligibility = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {eligibilityResult ? `Eligibility Results for ${eligibilityResult.fundName}` : "Eligibility Criteria Reference"}
+              {eligibilityResponse ? `Eligibility Results for ${selectedFundName}` : "Eligibility Criteria Reference"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -145,8 +155,16 @@ const FundEligibility = () => {
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : eligibilityResult ? (
-              <EligibilityDisplay result={eligibilityResult} />
+            ) : companyResultsArray.length > 0 ? (
+              <div className="space-y-6">
+                {companyResultsArray.map(([companyName, result]) => (
+                  <EligibilityDisplay 
+                    key={companyName} 
+                    companyName={companyName} 
+                    result={result} 
+                  />
+                ))}
+              </div>
             ) : (
               <div className="p-4 border border-dashed rounded-lg bg-muted/30 flex items-center justify-center h-64">
                 <p className="text-muted-foreground text-center">
@@ -164,7 +182,7 @@ const FundEligibility = () => {
         open={isFundSearchOpen}
         onOpenChange={setIsFundSearchOpen}
         onSelectFund={handleSelectFund}
-        environment={environment} // Passing environment here
+        environment={environment}
       />
     </>
   );

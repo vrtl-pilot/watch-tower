@@ -16,12 +16,8 @@ namespace WatchTower.API.Controllers
             _fundEligibilityService = fundEligibilityService;
         }
 
-        /// <summary>
-        /// Checks the eligibility of a fund against various criteria for a specific environment.
-        /// </summary>
         [HttpPost("check")]
-        [ProducesResponseType(typeof(FundEligibilityResult), 200)]
-        public async Task<IActionResult> CheckEligibility([FromBody] FundEligibilityRequest request)
+        public async Task<ActionResult<FundEligibilityResponse>> CheckEligibility([FromBody] FundEligibilityRequest request)
         {
             if (string.IsNullOrEmpty(request.FundName))
             {
