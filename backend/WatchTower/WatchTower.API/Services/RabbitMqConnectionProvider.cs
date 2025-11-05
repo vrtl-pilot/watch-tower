@@ -25,15 +25,26 @@ namespace WatchTower.API.Services
                 return bus;
             }
 
-            var connectionString = _configuration.GetSection(_connectionStringSection)[normalizedEnv];
+            var messageQueueConnectionString = _configuration.GetSection(_connectionStringSection)[normalizedEnv];
 
-            if (string.IsNullOrEmpty(connectionString))
+            if (string.IsNullOrEmpty(messageQueueConnectionString))
             {
                 throw new InvalidOperationException($"RabbitMQ connection string not found for environment: {normalizedEnv}");
             }
 
+            // Check if virtualHost is present (case-insensitive check)
+            if (!messageQueueConnectionString.Contains("virtualHost", StringComparison.OrdinalIgnoreCase))
+            {
+                // Ensure a semicolon separator is used before appending the new parameter
+                if (!messageQueueConnectionString.EndsWith(";"))
+                {
+                    messageQueueConnectionString += ";";
+                }
+                messageQueueConnectionString += "virtualHost=Dev01";
+            }
+
             // EasyNetQ handles connection management internally.
-            var newBus = RabbitHutch.CreateBus(connectionString);
+            var newBus = RabbitHutch.CreateBus(messageQueueConnectionString);
             _buses.TryAdd(normalizedEnv, newBus);
             return newBus;
         }
