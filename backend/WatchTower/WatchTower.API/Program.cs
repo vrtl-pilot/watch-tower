@@ -1,27 +1,26 @@
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
+using WatchTower.Shared.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add configuration for queries.json
+builder.Configuration.AddJsonFile("queries.json", optional: false, reloadOnChange: true);
+
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
-// This is a new service to read Redis connection strings from appsettings.json
-// It can be injected into other services like RedisService.
-builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
-
-// --- Other service registrations would go here ---
-builder.Services.AddSingleton<IRedisService, RedisService>();
+// Register custom services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
+builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
+builder.Services.AddScoped<IRedisService, RedisService>();
 builder.Services.AddScoped<IFundService, FundService>();
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-// -------------------------------------------------
+builder.Services.AddSingleton<IQueryService, QueryService>(); // Register QueryService
 
 var app = builder.Build();
 
@@ -33,8 +32,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseRouting();
 
 app.UseAuthorization();
 

@@ -18,4 +18,10 @@
     <ProjectReference Include="..\WatchTower.Shared\WatchTower.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="queries.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

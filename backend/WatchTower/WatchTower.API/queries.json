@@ -1,0 +1,8 @@
+{
+  "FundQueries": {
+    "SearchFunds": "SELECT DISTINCT FundName FROM Funds WHERE FundName LIKE @SearchPattern ORDER BY FundName"
+  },
+  "EligibilityQueries": {
+    "CheckEligibility": "SELECT * FROM FundCriteria WHERE FundName = @FundName AND Environment = @Environment"
+  }
+}
