@@ -2,71 +2,46 @@ using WatchTower.API.Services;
 using WatchTower.Shared.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using WatchTower.API.Models;
 
 namespace WatchTower.API.Services
 {
     public class FundEligibilityService : IFundEligibilityService
     {
+        private readonly IDataAccessHelper _dataAccessHelper;
+
+        public FundEligibilityService(IDataAccessHelper dataAccessHelper)
+        {
+            _dataAccessHelper = dataAccessHelper;
+        }
         public async Task<FundEligibilityResponse> CheckEligibilityAsync(FundEligibilityRequest request)
         {
-            await Task.Delay(500); // Simulate API latency
+            var parameters = new Dictionary<string, object>();
+            var sql = @"SELECT Query";
+            parameters.Add("@Name", request.FundName);
+
+            var fundsEligibility = await _dataAccessHelper.QueryAsync<EligibiliyItem>(sql, parameters, request.Environment);
 
             var response = new FundEligibilityResponse();
+            //Status => Eligible,Ineligible,Pending
 
-            // Mock data generation based on the request fund name
-            if (request.FundName.Contains("Global"))
+            response.CompanyResults = fundsEligibility.ToDictionary(f => $"{f.Company}({f.ClientFundname})", v => 
             {
-                response.CompanyResults.Add("Company A", new FundCriteriaResult
+                return new FundCriteriaResult
                 {
                     FundName = request.FundName,
-                    Status = "Eligible",
+                    Status = (v.ClientFundEligible || v.FundEligible) && v.MappingEligible ? "Eligible" : "Ineligible",
                     Criteria = new List<Criterion>
                     {
-                        new Criterion { Name = "Minimum Investment Met", Met = true },
-                        new Criterion { Name = "Jurisdiction Approved", Met = true },
-                        new Criterion { Name = "KYC Completed", Met = true }
+                        new Criterion { Name = "Fund Eligibility", Met = v.FundEligible },
+                        new Criterion { Name = "Client Fund Eligibility", Met = v.ClientFundEligible },
+                        new Criterion { Name = "Company Eligible", Met = v.MappingEligible },
+                        new Criterion { Name = "Migration Eligible", Met = v.IsMigrationEligible },
+                        new Criterion { Name = "MTD Support", Met = v.IsMTDSupport }
                     }
-                });
-
-                response.CompanyResults.Add("Company B", new FundCriteriaResult
-                {
-                    FundName = request.FundName,
-                    Status = "Ineligible",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "Minimum Investment Met", Met = true },
-                        new Criterion { Name = "Jurisdiction Approved", Met = false, Reason = "Restricted region." },
-                        new Criterion { Name = "KYC Completed", Met = true }
-                    }
-                });
-            }
-            else if (request.FundName.Contains("Sustainable"))
-            {
-                response.CompanyResults.Add("Company C", new FundCriteriaResult
-                {
-                    FundName = request.FundName,
-                    Status = "Pending",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "Minimum Investment Met", Met = true },
-                        new Criterion { Name = "Jurisdiction Approved", Met = true },
-                        new Criterion { Name = "KYC Completed", Met = false, Reason = "Awaiting document verification." }
-                    }
-                });
-            }
-            else
-            {
-                response.CompanyResults.Add("Default Company", new FundCriteriaResult
-                {
-                    FundName = request.FundName,
-                    Status = "Eligible",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "All checks passed", Met = true }
-                    }
-                });
-            }
-
+                };
+            });
+            
             return response;
         }
     }
