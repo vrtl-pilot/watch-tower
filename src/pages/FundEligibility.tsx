@@ -156,7 +156,7 @@ const FundEligibility = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : companyResultsArray.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 l:grid-cols-2 xl:grid-cols-3 gap-6">
                 {companyResultsArray.map(([companyName, result]) => (
                   <EligibilityDisplay 
                     key={companyName} 
