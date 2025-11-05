@@ -164,6 +164,7 @@ const FundEligibility = () => {
         open={isFundSearchOpen}
         onOpenChange={setIsFundSearchOpen}
         onSelectFund={handleSelectFund}
+        environment={environment} // Passing environment here
       />
     </>
   );

@@ -17,10 +17,11 @@ interface FundSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectFund: (fundName: string) => void;
+  environment: string; // Added environment prop
 }
 
-const fetchFunds = async (pattern: string): Promise<string[]> => {
-  const query = pattern ? `?searchPattern=${encodeURIComponent(pattern)}` : '';
+const fetchFunds = async (pattern: string, environment: string): Promise<string[]> => {
+  const query = pattern ? `?searchPattern=${encodeURIComponent(pattern)}&environment=${encodeURIComponent(environment)}` : `?environment=${encodeURIComponent(environment)}`;
   const response = await fetch(`/api/funds${query}`);
   if (!response.ok) {
     throw new Error("Failed to fetch funds.");
@@ -28,7 +29,7 @@ const fetchFunds = async (pattern: string): Promise<string[]> => {
   return response.json();
 };
 
-export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearchDialogProps) => {
+export const FundSearchDialog = ({ open, onOpenChange, onSelectFund, environment }: FundSearchDialogProps) => {
   const [funds, setFunds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +45,7 @@ export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearc
     setIsLoading(true);
     setCurrentPattern(pattern);
     try {
-      const data = await fetchFunds(pattern);
+      const data = await fetchFunds(pattern, environment);
       setFunds(data);
     } catch (error) {
       console.error("Error fetching funds:", error);
@@ -66,7 +67,7 @@ export const FundSearchDialog = ({ open, onOpenChange, onSelectFund }: FundSearc
         setFunds([]);
       }
     }
-  }, [open]);
+  }, [open, environment]); // Added environment to dependency array
 
   const handleSelect = (fundName: string) => {
     onSelectFund(fundName);
