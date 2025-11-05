@@ -1,26 +1,31 @@
 using WatchTower.API.Hubs;
 using WatchTower.API.Services;
-using WatchTower.Shared.Models;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add configuration for queries.json
-builder.Configuration.AddJsonFile("queries.json", optional: false, reloadOnChange: true);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add SignalR
 builder.Services.AddSignalR();
 
-// Register custom services
+// Add custom services
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 builder.Services.AddScoped<IDataAccessHelper, DataAccessHelper>();
-builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
-builder.Services.AddScoped<IRedisService, RedisService>();
 builder.Services.AddScoped<IFundService, FundService>();
 builder.Services.AddScoped<IFundEligibilityService, FundEligibilityService>();
-builder.Services.AddSingleton<IQueryService, QueryService>(); // Register QueryService
+builder.Services.AddScoped<IQueryService, QueryService>();
+
+// Redis setup
+builder.Services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
+builder.Services.AddScoped<IRedisService, RedisService>();
+
+// RabbitMQ setup (EasyNetQ)
+builder.Services.AddSingleton<IRabbitMqConnectionProvider, RabbitMqConnectionProvider>();
+
 
 var app = builder.Build();
 
@@ -36,6 +41,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
 app.MapHub<WatchTowerHub>("/watchtowerhub");
 
 app.Run();
