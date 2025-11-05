@@ -39,8 +39,8 @@ namespace WatchTower.API.Services
             //var info = await server.InfoAsync();
             //var infoDict = info.SelectMany(g => g).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            var usedMemory = ExtractInfoValue(infoLines, "used_memory_human");
-            var maxMemory = ExtractInfoValue(infoLines, "used_memory_peak_human");
+            long.TryParse(ExtractInfoValue(infoLines, "used_memory"), out var usedMemory);
+            long.TryParse(ExtractInfoValue(infoLines, "maxmemory"), out var maxMemory);
             int.TryParse(ExtractInfoValue(infoLines, "connected_clients"), out var clients);
             
 
