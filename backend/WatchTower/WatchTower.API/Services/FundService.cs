@@ -16,7 +16,7 @@ namespace WatchTower.API.Services
             _queryService = queryService;
         }
 
-        public async Task<IEnumerable<string>> GetFundsAsync(string searchPattern, string environment)
+        public async Task<IEnumerable<string>> GetFundNamesAsync(string environment, string? searchPattern = null)
         {
             // Retrieve query from QueryService
             var sql = _queryService.GetQuery("FundQueries", "SearchFunds");

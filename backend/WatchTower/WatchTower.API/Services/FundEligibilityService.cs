@@ -23,45 +23,30 @@ namespace WatchTower.API.Services
             var sql = _queryService.GetQuery("EligibilityQueries", "CheckEligibility");
             
             var parameters = new DynamicParameters();
-            parameters.Add("@FundName", request.FundName);
-            parameters.Add("@Environment", request.Environment);
+            parameters.Add("@Name", request.FundName);
 
             // Execute query to get a flat list of EligibiliyItem rows
-            var rawResults = await _dataAccessHelper.QueryAsync<EligibiliyItem>(sql, parameters, request.Environment);
+            var fundsEligibility = await _dataAccessHelper.QueryAsync<EligibiliyItem>(sql, parameters, request.Environment);
 
             var response = new FundEligibilityResponse();
+            //Status => Eligible,Ineligible,Pending
 
-            if (rawResults == null || !rawResults.Any())
+            response.CompanyResults = fundsEligibility.ToDictionary(f => $"{f.Company}({f.ClientFundname})", v => 
             {
-                // Return empty response if no data is found
-                return response;
-            }
-
-            // Group results by CompanyName
-            var groupedResults = rawResults.GroupBy(r => r.CompanyName);
-
-            foreach (var group in groupedResults)
-            {
-                var companyName = group.Key;
-                var fundName = group.First().FundName;
-                
-                // We rely on the Status field provided by the query result for the overall status.
-                var overallStatus = group.First().Status; 
-
-                var criteriaResults = group.Select(r => new Criterion
+                return new FundCriteriaResult
                 {
-                    Name = r.CriterionName,
-                    Met = r.Met,
-                    Reason = r.Reason
-                }).ToList();
-
-                response.CompanyResults.Add(companyName, new FundCriteriaResult
-                {
-                    FundName = fundName,
-                    Status = overallStatus,
-                    Criteria = criteriaResults
-                });
-            }
+                    FundName = request.FundName,
+                    Status = (v.ClientFundEligible || v.FundEligible) && v.MappingEligible ? "Eligible" : "Ineligible",
+                    Criteria = new List<Criterion>
+                    {
+                        new Criterion { Name = "Fund Eligibility", Met = v.FundEligible },
+                        new Criterion { Name = "Client Fund Eligibility", Met = v.ClientFundEligible },
+                        new Criterion { Name = "Company Eligible", Met = v.MappingEligible },
+                        new Criterion { Name = "Migration Eligible", Met = v.IsMigrationEligible },
+                        new Criterion { Name = "MTD Support", Met = v.IsMTDSupport }
+                    }
+                };
+            });
 
             return response;
         }
