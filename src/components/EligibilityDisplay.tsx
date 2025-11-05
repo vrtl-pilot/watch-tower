@@ -31,10 +31,10 @@ export const EligibilityDisplay = ({ companyName, result }: EligibilityDisplayPr
   return (
     <div className="space-y-4 p-4 border rounded-lg shadow-sm bg-background">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3">
-        <h3 className="text-xl font-semibold mb-2 sm:mb-0">{companyName}</h3>
+        <h3 className="text-xl font-semibold mb-2 sm:mb-0 break-words pr-4">{companyName}</h3>
         <Badge
           className={cn(
-            "text-white font-bold px-3 py-1.5 flex items-center gap-2",
+            "text-white font-bold px-3 py-1.5 flex items-center gap-2 flex-shrink-0",
             statusColor
           )}
         >
@@ -47,20 +47,20 @@ export const EligibilityDisplay = ({ companyName, result }: EligibilityDisplayPr
         <CardHeader className="p-0 pb-2">
           <CardTitle className="text-base font-medium">Criteria Breakdown</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 space-y-2">
+        <CardContent className="p-0 space-y-0">
           {result.criteria.map((criterion, index) => {
             const Icon = criterion.met ? CheckCircle : XCircle;
             const iconColor = criterion.met ? "text-green-500" : "text-red-500";
             const textColor = criterion.met ? "text-foreground" : "text-red-700 dark:text-red-400";
 
             return (
-              <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b last:border-b-0 py-2">
-                <div className="flex items-center gap-3 flex-1">
-                  <Icon className={cn("h-5 w-5 flex-shrink-0", iconColor)} />
-                  <p className={cn("font-medium text-sm", textColor)}>{criterion.name}</p>
+              <div key={index} className="flex flex-col justify-between border-b last:border-b-0 py-3">
+                <div className="flex items-start gap-3">
+                  <Icon className={cn("h-5 w-5 flex-shrink-0 mt-0.5", iconColor)} />
+                  <p className={cn("font-medium text-sm flex-1", textColor)}>{criterion.name}</p>
                 </div>
                 {!criterion.met && criterion.reason && (
-                  <p className="text-xs text-muted-foreground mt-1 sm:mt-0 sm:ml-4 sm:text-right max-w-full sm:max-w-xs">
+                  <p className="text-xs text-muted-foreground mt-1 ml-8">
                     Reason: {criterion.reason}
                   </p>
                 )}
