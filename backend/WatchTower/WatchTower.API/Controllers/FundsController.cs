@@ -16,11 +16,11 @@ namespace WatchTower.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetFundNames([FromQuery] string? searchPattern)
+        public async Task<IActionResult> GetFundNames([FromQuery] string? searchPattern, string environment)
         {
             try
             {
-                var funds = await _fundService.GetFundNamesAsync(searchPattern);
+                var funds = await _fundService.GetFundNamesAsync(environment, searchPattern);
                 return Ok(funds);
             }
             catch (System.Exception)

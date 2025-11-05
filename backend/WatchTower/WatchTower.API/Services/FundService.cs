@@ -12,10 +12,10 @@ namespace WatchTower.API.Services
             _dataAccessHelper = dataAccessHelper;
         }
 
-        public async Task<IEnumerable<string>> GetFundNamesAsync(string? searchPattern = null)
+        public async Task<IEnumerable<string>> GetFundNamesAsync(string environment, string? searchPattern = null)
         {
             // Use LIKE for pattern matching if a search pattern is provided.
-            var sql = "SELECT FundName FROM Funds";
+            var sql = "SELECT FundName FROM Fund";
             var parameters = new Dictionary<string, object>();
 
             if (!string.IsNullOrWhiteSpace(searchPattern))
@@ -29,7 +29,7 @@ namespace WatchTower.API.Services
 
             try
             {
-                var funds = await _dataAccessHelper.QueryAsync<string>(sql, parameters);
+                var funds = await _dataAccessHelper.QueryAsync<string>(sql, parameters, environment);
                 return funds;
             }
             catch (System.Exception ex)
