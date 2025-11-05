@@ -30,27 +30,40 @@ namespace WatchTower.API.Services
 
         public async Task<RedisInfo> GetRedisInfoAsync(string environment)
         {
-            var server = GetServer(environment);
-            var info = await server.InfoAsync();
-            var infoDict = info.SelectMany(g => g).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            //var server = GetServer(environment);
+            var db = GetDatabase(environment);
 
-            long.TryParse(infoDict.GetValueOrDefault("db0")?.Split(',')[0].Split('=')[1], out var totalKeys);
-            long.TryParse(infoDict.GetValueOrDefault("used_memory"), out var usedMemory);
-            long.TryParse(infoDict.GetValueOrDefault("maxmemory"), out var maxMemory);
-            int.TryParse(infoDict.GetValueOrDefault("connected_clients"), out var clients);
-            double.TryParse(infoDict.GetValueOrDefault("keyspace_hitrate"), NumberStyles.Any, CultureInfo.InvariantCulture, out var hitRate);
+            var infoResult = db.Execute("INFO").ToString();
+            var infoLines = infoResult.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            //var info = await server.InfoAsync();
+            //var infoDict = info.SelectMany(g => g).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            var usedMemory = ExtractInfoValue(infoLines, "used_memory_human");
+            var maxMemory = ExtractInfoValue(infoLines, "used_memory_peak_human");
+            int.TryParse(ExtractInfoValue(infoLines, "connected_clients"), out var clients);
+            
+
+            long.TryParse(ExtractInfoValue(infoLines,"db0")?.Split(',')[0].Split('=')[1], out var totalKeys);
+            //double.TryParse(infoDict.GetValueOrDefault("keyspace_hitrate"), NumberStyles.Any, CultureInfo.InvariantCulture, out var hitRate);
 
             return new RedisInfo
             {
                 Status = "Running", // Simplified status
-                Uptime = infoDict.GetValueOrDefault("uptime_in_days") + " days",
+                Uptime = ExtractInfoValue(infoLines, "uptime_in_days") + " days",
                 ConnectedClients = clients,
                 TotalKeys = totalKeys,
-                PersistenceStatus = infoDict.GetValueOrDefault("rdb_last_bgsave_status") == "ok" ? "OK" : "Issues",
-                HitRatio = hitRate,
+                PersistenceStatus = ExtractInfoValue(infoLines, "rdb_last_bgsave_status") == "ok" ? "OK" : "Issues",
+                //HitRatio = hitRate,
                 UsedMemoryBytes = usedMemory,
-                MaxMemoryBytes = maxMemory > 0 ? maxMemory : 2147483648, // Default to 2GB if not set
+                MaxMemoryBytes = maxMemory, // Default to 2GB if not set
             };
+        }
+
+        private string ExtractInfoValue(string[] infoLines, string key)
+        {
+            var line = infoLines.FirstOrDefault(l => l.StartsWith(key));
+            return line?.Split(':')[1]?.Trim();
         }
 
         public Task<List<RedisLatencyData>> GetLatencyDataAsync(string environment)

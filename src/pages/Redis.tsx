@@ -58,14 +58,14 @@ const Redis = () => {
   const { data: info, isLoading: isLoadingInfo, isError: isErrorInfo } = useQuery<RedisInfo>({
     queryKey: ['redisInfo', environment],
     queryFn: () => fetchRedisInfo(environment),
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     onError: () => showError("Failed to load Redis instance information."),
   });
 
   const { data: latencyData, isLoading: isLoadingLatency, isError: isErrorLatency } = useQuery<LatencyData[]>({
     queryKey: ['redisLatency', environment],
     queryFn: () => fetchLatencyData(environment),
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     onError: () => showError("Failed to load Redis latency data."),
   });
 
