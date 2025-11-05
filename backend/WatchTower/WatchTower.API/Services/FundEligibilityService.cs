@@ -2,77 +2,64 @@ using WatchTower.API.Services;
 using WatchTower.Shared.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
+using Dapper;
 
 namespace WatchTower.API.Services
 {
     public class FundEligibilityService : IFundEligibilityService
     {
         private readonly IQueryService _queryService;
+        private readonly IDataAccessHelper _dataAccessHelper;
 
-        public FundEligibilityService(IQueryService queryService)
+        public FundEligibilityService(IQueryService queryService, IDataAccessHelper dataAccessHelper)
         {
             _queryService = queryService;
-            // Example usage (not executed, just demonstrating access):
-            // var eligibilityQuery = _queryService.GetQuery("EligibilityQueries", "CheckEligibility");
+            _dataAccessHelper = dataAccessHelper;
         }
 
         public async Task<FundEligibilityResponse> CheckEligibilityAsync(FundEligibilityRequest request)
         {
-            await Task.Delay(500); // Simulate API latency
+            var sql = _queryService.GetQuery("EligibilityQueries", "CheckEligibility");
+            
+            var parameters = new DynamicParameters();
+            parameters.Add("@FundName", request.FundName);
+            parameters.Add("@Environment", request.Environment);
+
+            // Execute query to get a flat list of EligibiliyItem rows
+            var rawResults = await _dataAccessHelper.QueryAsync<EligibiliyItem>(sql, parameters, request.Environment);
 
             var response = new FundEligibilityResponse();
 
-            // Mock data generation based on the request fund name
-            if (request.FundName.Contains("Global"))
+            if (rawResults == null || !rawResults.Any())
             {
-                response.CompanyResults.Add("Company A", new FundCriteriaResult
-                {
-                    FundName = request.FundName,
-                    Status = "Eligible",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "Minimum Investment Met", Met = true },
-                        new Criterion { Name = "Jurisdiction Approved", Met = true },
-                        new Criterion { Name = "KYC Completed", Met = true }
-                    }
-                });
+                // Return empty response if no data is found
+                return response;
+            }
 
-                response.CompanyResults.Add("Company B", new FundCriteriaResult
-                {
-                    FundName = request.FundName,
-                    Status = "Ineligible",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "Minimum Investment Met", Met = true },
-                        new Criterion { Name = "Jurisdiction Approved", Met = false, Reason = "Restricted region." },
-                        new Criterion { Name = "KYC Completed", Met = true }
-                    }
-                });
-            }
-            else if (request.FundName.Contains("Sustainable"))
+            // Group results by CompanyName
+            var groupedResults = rawResults.GroupBy(r => r.CompanyName);
+
+            foreach (var group in groupedResults)
             {
-                response.CompanyResults.Add("Company C", new FundCriteriaResult
+                var companyName = group.Key;
+                var fundName = group.First().FundName;
+                
+                // We rely on the Status field provided by the query result for the overall status.
+                var overallStatus = group.First().Status; 
+
+                var criteriaResults = group.Select(r => new Criterion
                 {
-                    FundName = request.FundName,
-                    Status = "Pending",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "Minimum Investment Met", Met = true },
-                        new Criterion { Name = "Jurisdiction Approved", Met = true },
-                        new Criterion { Name = "KYC Completed", Met = false, Reason = "Awaiting document verification." }
-                    }
-                });
-            }
-            else
-            {
-                response.CompanyResults.Add("Default Company", new FundCriteriaResult
+                    Name = r.CriterionName,
+                    Met = r.Met,
+                    Reason = r.Reason
+                }).ToList();
+
+                response.CompanyResults.Add(companyName, new FundCriteriaResult
                 {
-                    FundName = request.FundName,
-                    Status = "Eligible",
-                    Criteria = new List<Criterion>
-                    {
-                        new Criterion { Name = "All checks passed", Met = true }
-                    }
+                    FundName = fundName,
+                    Status = overallStatus,
+                    Criteria = criteriaResults
                 });
             }
 
