@@ -9,6 +9,7 @@ namespace WatchTower.API.Services
         private readonly IConfiguration _configuration;
         private readonly ConcurrentDictionary<string, IBus> _buses = new ConcurrentDictionary<string, IBus>();
         private readonly string _connectionStringSection = "RabbitMqConnectionStrings";
+        private readonly string _virtualHostSection = "RabbitMqConnectionStrings.virtualHost";
 
         public RabbitMqConnectionProvider(IConfiguration configuration)
         {
@@ -36,7 +37,7 @@ namespace WatchTower.API.Services
             if (!messageQueueConnectionString.Contains("virtualHost", StringComparison.OrdinalIgnoreCase))
             {
                 // Use the normalized environment name as the default virtual host
-                var defaultVirtualHost = normalizedEnv; 
+                var defaultVirtualHost = _configuration.GetSection(_virtualHostSection)[normalizedEnv]; 
                 
                 // Ensure a semicolon separator is used before appending the new parameter
                 if (!messageQueueConnectionString.EndsWith(";"))
