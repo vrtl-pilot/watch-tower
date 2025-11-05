@@ -33,6 +33,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Default to 60 seconds (60000 ms) if environment variable is not set
+const DEFAULT_REFRESH_INTERVAL_MS = 60000; 
+const REFRESH_INTERVAL_MS = 
+  parseInt(import.meta.env.VITE_REDIS_REFRESH_INTERVAL_MS || "", 10) || DEFAULT_REFRESH_INTERVAL_MS;
+
 interface RedisKeyEntry {
   key: string;
   type: string;
@@ -86,7 +91,7 @@ export const RedisKeyTable = ({ environment }: RedisKeyTableProps) => {
   const { data: rawKeys, isLoading, refetch } = useQuery<RedisKeyEntry[]>({
     queryKey: ['redisKeys', environment, searchPattern],
     queryFn: () => fetchKeys(searchPattern, environment),
-    refetchInterval: 10000,
+    refetchInterval: REFRESH_INTERVAL_MS,
   });
 
   const keys = useMemo(() => {
