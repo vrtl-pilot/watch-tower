@@ -35,12 +35,15 @@ namespace WatchTower.API.Services
             // Check if virtualHost is present (case-insensitive check)
             if (!messageQueueConnectionString.Contains("virtualHost", StringComparison.OrdinalIgnoreCase))
             {
+                // Use the normalized environment name as the default virtual host
+                var defaultVirtualHost = normalizedEnv; 
+                
                 // Ensure a semicolon separator is used before appending the new parameter
                 if (!messageQueueConnectionString.EndsWith(";"))
                 {
                     messageQueueConnectionString += ";";
                 }
-                messageQueueConnectionString += "virtualHost=Dev01";
+                messageQueueConnectionString += $"virtualHost={defaultVirtualHost}";
             }
 
             // EasyNetQ handles connection management internally.
