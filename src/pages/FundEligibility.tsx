@@ -27,6 +27,9 @@ interface FundCriteriaResult {
     met: boolean;
     reason?: string;
   }[];
+  frequency: string;
+  clientFundName: string;
+  company: string;
 }
 
 interface FundEligibilityResponse {
@@ -203,10 +206,9 @@ const FundEligibility = () => {
             ) : companyResultsArray.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {companyResultsArray.map(([companyName, result]) => (
-                  <EligibilityDisplay 
-                    key={companyName} 
-                    companyName={companyName} 
-                    result={result} 
+                  <EligibilityDisplay
+                    key={companyName}
+                    result={result}
                   />
                 ))}
               </div>

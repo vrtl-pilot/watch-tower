@@ -31,7 +31,7 @@ namespace WatchTower.API.Services
             var response = new FundEligibilityResponse();
             //Status => Eligible,Ineligible,Pending
 
-            response.CompanyResults = fundsEligibility.ToDictionary(f => $"{f.Company}({f.ClientFundname})", v => 
+            response.CompanyResults = fundsEligibility.ToDictionary(f => $"{f.Company}({f.ClientFundname})", v =>
             {
                 return new FundCriteriaResult
                 {
@@ -44,7 +44,10 @@ namespace WatchTower.API.Services
                         new Criterion { Name = "Company Eligible", Met = v.MappingEligible },
                         new Criterion { Name = "Migration Eligible", Met = v.IsMigrationEligible },
                         new Criterion { Name = "MTD Support", Met = v.IsMTDSupport }
-                    }
+                    },
+                    Frequency = "Daily", // Default value as specified
+                    ClientFundName = v.ClientFundname,
+                    Company = v.Company
                 };
             });
 

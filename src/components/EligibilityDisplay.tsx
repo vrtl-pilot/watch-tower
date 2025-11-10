@@ -12,10 +12,12 @@ interface FundCriteriaResult {
     met: boolean;
     reason?: string;
   }[];
+  frequency: string;
+  clientFundName: string;
+  company: string;
 }
 
 interface EligibilityDisplayProps {
-  companyName: string;
   result: FundCriteriaResult;
 }
 
@@ -25,13 +27,19 @@ const statusMap = {
   Pending: { icon: Clock, color: "bg-yellow-600 hover:bg-yellow-600/80", text: "text-yellow-500" },
 };
 
-export const EligibilityDisplay = ({ companyName, result }: EligibilityDisplayProps) => {
+export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
   const { icon: StatusIcon, color: statusColor } = statusMap[result.status];
 
   return (
     <div className="space-y-4 p-4 border rounded-lg shadow-sm bg-background">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3">
-        <h3 className="text-xl font-semibold mb-2 sm:mb-0 break-words pr-4">{companyName}</h3>
+        <div className="flex flex-col">
+          <h3 className="text-xl font-semibold mb-1 break-words pr-4">{result.company}</h3>
+          <div className="text-sm text-muted-foreground">
+            <span>{result.frequency}</span>
+            {result.clientFundName && <span> • {result.clientFundName}</span>}
+          </div>
+        </div>
         <Badge
           className={cn(
             "text-white font-bold px-3 py-1.5 flex items-center gap-2 flex-shrink-0",
