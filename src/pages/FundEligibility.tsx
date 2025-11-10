@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Search, X, Loader2 } from "lucide-react";
 import { FundSearchDialog } from "@/components/FundSearchDialog";
 import { showSuccess, showError } from "@/utils/toast";
@@ -38,6 +40,10 @@ const FundEligibility = () => {
   const [eligibilityResponse, setEligibilityResponse] = useState<FundEligibilityResponse | null>(null);
   const [environment, setEnvironment] = useState(DEFAULT_ENVIRONMENT.toLowerCase());
   const [isLoading, setIsLoading] = useState(false);
+  const [primaryFunds, setPrimaryFunds] = useState(false);
+  const [includeFof, setIncludeFof] = useState(false);
+  const [useDate, setUseDate] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const handleSelectFund = (fundName: string) => {
     setSelectedFundName(fundName);
@@ -53,12 +59,20 @@ const FundEligibility = () => {
     setEligibilityResponse(null);
 
     try {
+      const requestBody = {
+        fundName: selectedFundName,
+        environment,
+        primaryFunds,
+        includeFof,
+        date: useDate ? selectedDate : null,
+      };
+
       const response = await fetch('/api/fundeligibility/check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fundName: selectedFundName, environment }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -130,6 +144,38 @@ const FundEligibility = () => {
                   <span className="sr-only">Search funds</span>
                 </Button>
               </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="primaryFunds"
+                  checked={primaryFunds}
+                  onCheckedChange={(checked) => setPrimaryFunds(checked === true)}
+                />
+                <Label htmlFor="primaryFunds">Primary funds</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeFof"
+                  checked={includeFof}
+                  onCheckedChange={(checked) => setIncludeFof(checked === true)}
+                />
+                <Label htmlFor="includeFof">Include Fof</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="useDate"
+                  checked={useDate}
+                  onCheckedChange={(checked) => setUseDate(checked === true)}
+                />
+                <Label htmlFor="useDate">Date</Label>
+              </div>
+              {useDate && (
+                <div className="grid items-center gap-1.5">
+                  <Label htmlFor="selectedDate">Select Date</Label>
+                  <DatePicker date={selectedDate} setDate={setSelectedDate} />
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Button onClick={handleCheckEligibility} disabled={!selectedFundName || isLoading}>
