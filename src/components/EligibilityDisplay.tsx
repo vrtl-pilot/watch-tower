@@ -3,8 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-// Renamed from EligibilityResult to FundCriteriaResult to match backend model
-interface FundCriteriaResult {
+// Renamed from EligibilityResult to FundEligibilityResult to match backend model
+interface FundEligibilityResult {
   fundName: string;
   status: 'Eligible' | 'Ineligible' | 'Pending';
   criteria: {
@@ -18,7 +18,7 @@ interface FundCriteriaResult {
 }
 
 interface EligibilityDisplayProps {
-  result: FundCriteriaResult;
+  result: FundEligibilityResult;
 }
 
 const statusMap = {

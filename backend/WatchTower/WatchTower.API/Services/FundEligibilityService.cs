@@ -33,7 +33,7 @@ namespace WatchTower.API.Services
 
             response.CompanyResults = fundsEligibility.ToDictionary(f => $"{f.Company}({f.ClientFundname})", v =>
             {
-                return new FundCriteriaResult
+                return new FundEligibilityResult
                 {
                     FundName = request.FundName,
                     Status = (v.ClientFundEligible || v.FundEligible) && v.MappingEligible ? "Eligible" : "Ineligible",
@@ -45,7 +45,7 @@ namespace WatchTower.API.Services
                         new Criterion { Name = "Migration Eligible", Met = v.IsMigrationEligible },
                         new Criterion { Name = "MTD Support", Met = v.IsMTDSupport }
                     },
-                    Frequency = "Daily", // Default value as specified
+                    Frequency = v.Frequency,
                     ClientFundName = v.ClientFundname,
                     Company = v.Company
                 };

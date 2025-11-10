@@ -19,7 +19,7 @@ import { EligibilityDisplay } from "@/components/EligibilityDisplay";
 import { ENVIRONMENTS, DEFAULT_ENVIRONMENT } from "@/lib/constants";
 
 // New TypeScript interfaces matching the updated C# models
-interface FundCriteriaResult {
+interface FundEligibilityResult {
   fundName: string;
   status: 'Eligible' | 'Ineligible' | 'Pending';
   criteria: {
@@ -33,8 +33,8 @@ interface FundCriteriaResult {
 }
 
 interface FundEligibilityResponse {
-  // Key: Company Name, Value: FundCriteriaResult
-  companyResults: Record<string, FundCriteriaResult>;
+  // Key: Company Name, Value: FundEligibilityResult
+  companyResults: Record<string, FundEligibilityResult>;
 }
 
 const FundEligibility = () => {

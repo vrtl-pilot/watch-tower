@@ -9,5 +9,6 @@ namespace WatchTower.Shared.Models
         public bool IsMigrationEligible { get; set; }
         public string Company { get; set; }
         public string ClientFundname { get; set; }
+        public string Frequency { get; set; } = string.Empty;
     }
 }
