@@ -4,6 +4,8 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("queries.json");
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
