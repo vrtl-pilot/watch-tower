@@ -122,69 +122,68 @@ const FundEligibility = () => {
           <CardHeader>
             <CardTitle>Select Fund for Eligibility Check</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap items-end gap-4">
-            <div className="grid flex-grow min-w-[250px] items-center gap-1.5">
-              <Label htmlFor="fundName">Fund Name</Label>
-              <div className="relative flex items-center">
-                <Input
-                  id="fundName"
-                  value={selectedFundName}
-                  onChange={(e) => setSelectedFundName(e.target.value)}
-                  placeholder="Search or select a fund"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 h-7 w-7"
-                  onClick={() => setIsFundSearchOpen(true)}
-                >
-                  <Search className="h-4 w-4" />
-                  <span className="sr-only">Search funds</span>
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="grid flex-grow min-w-[250px] items-center gap-1.5">
+                <Label htmlFor="fundName">Fund Name</Label>
+                <div className="relative flex items-center">
+                  <Input
+                    id="fundName"
+                    value={selectedFundName}
+                    onChange={(e) => setSelectedFundName(e.target.value)}
+                    placeholder="Search or select a fund"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 h-7 w-7"
+                    onClick={() => setIsFundSearchOpen(true)}
+                  >
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Search funds</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <Checkbox
+                    id="primaryFunds"
+                    checked={primaryFunds}
+                    onCheckedChange={(checked) => setPrimaryFunds(checked === true)}
+                  />
+                  <Label htmlFor="primaryFunds">Primary funds</Label>
+                </div>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <Checkbox
+                    id="includeFof"
+                    checked={includeFof}
+                    onCheckedChange={(checked) => setIncludeFof(checked === true)}
+                  />
+                  <Label htmlFor="includeFof">Include Fof</Label>
+                </div>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <Checkbox
+                    id="useDate"
+                    checked={useDate}
+                    onCheckedChange={(checked) => setUseDate(checked === true)}
+                  />
+                  <Label htmlFor="useDate">Date</Label>
+                  {useDate && <DatePicker date={selectedDate} setDate={setSelectedDate} className="flex-shrink-0 min-w-[200px]" />}
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button onClick={handleCheckEligibility} disabled={!selectedFundName || isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Check Eligibility
+                </Button>
+                <Button variant="outline" onClick={handleClear} disabled={!selectedFundName && !eligibilityResponse}>
+                  <X className="h-4 w-4 mr-2" /> Clear
                 </Button>
               </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="primaryFunds"
-                  checked={primaryFunds}
-                  onCheckedChange={(checked) => setPrimaryFunds(checked === true)}
-                />
-                <Label htmlFor="primaryFunds">Primary funds</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="includeFof"
-                  checked={includeFof}
-                  onCheckedChange={(checked) => setIncludeFof(checked === true)}
-                />
-                <Label htmlFor="includeFof">Include Fof</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="useDate"
-                  checked={useDate}
-                  onCheckedChange={(checked) => setUseDate(checked === true)}
-                />
-                <Label htmlFor="useDate">Date</Label>
-              </div>
-              {useDate && (
-                <div className="grid items-center gap-1.5">
-                  <Label htmlFor="selectedDate">Select Date</Label>
-                  <DatePicker date={selectedDate} setDate={setSelectedDate} />
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={handleCheckEligibility} disabled={!selectedFundName || isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Check Eligibility
-              </Button>
-              <Button variant="outline" onClick={handleClear} disabled={!selectedFundName && !eligibilityResponse}>
-                <X className="h-4 w-4 mr-2" /> Clear
-              </Button>
             </div>
           </CardContent>
         </Card>
