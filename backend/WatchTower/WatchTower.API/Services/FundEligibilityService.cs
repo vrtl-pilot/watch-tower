@@ -26,14 +26,26 @@ namespace WatchTower.API.Services
 
             var parameters = new DynamicParameters();
             parameters.Add("@Name", request.FundName);
+            parameters.Add("@ContextDate", request.Date);
+            parameters.Add("@OnlyHMDataPrimaryFunds", request.PrimaryFunds);
 
             // Execute query to get a flat list of EligibiliyItem rows
-            var fundsEligibilityTask = _dataAccessHelper.QueryAsync<EligibiliyItem>(eligible, parameters, request.Environment);
-            var mappingTask = _dataAccessHelper.QueryAsync<FoFDates>(fofDates, parameters, request.Environment);
-            //parameters.Add("@Name", request.FundName);
-            var fofTask = _dataAccessHelper.QueryAsync<FoFFunds>(fofFunds, parameters, request.Environment);
+            var tasks = new List<Task>();
 
-            await Task.WhenAll(fundsEligibilityTask, fofTask, mappingTask);
+            var fundsEligibilityTask = _dataAccessHelper.QueryAsync<EligibiliyItem>(eligible, parameters, request.Environment);
+            Task<IEnumerable<FoFDates>> mappingTask = Task.FromResult<IEnumerable<FoFDates>>(new List<FoFDates>());
+            Task<IEnumerable<FoFFunds>> fofTask = Task.FromResult<IEnumerable<FoFFunds>>(new List<FoFFunds>());
+            tasks.Add(fundsEligibilityTask);
+            if (request.IncludeFof)
+            {
+                mappingTask = _dataAccessHelper.QueryAsync<FoFDates>(fofDates, parameters, request.Environment);
+                tasks.Add(mappingTask);
+                //parameters.Add("@Name", request.FundName);
+                fofTask = _dataAccessHelper.QueryAsync<FoFFunds>(fofFunds, parameters, request.Environment);
+                tasks.Add(fofTask);
+            }
+
+            await Task.WhenAll(tasks);
 
             var fundsEligibility = fundsEligibilityTask.Result;
             var mapping = mappingTask.Result;
