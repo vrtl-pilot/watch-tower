@@ -37,7 +37,18 @@ export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
     <div className="space-y-4 p-4 border rounded-lg shadow-sm bg-background">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3">
         <div className="flex flex-col">
-          <h3 className="text-xl font-semibold mb-1 break-words pr-4">{result.company}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-xl font-semibold break-words">{result.company}</h3>
+            <Badge
+              className={cn(
+                "text-white font-bold px-3 py-1.5 flex items-center gap-2",
+                statusColor
+              )}
+            >
+              <StatusIcon className="h-4 w-4" />
+              {result.status}
+            </Badge>
+          </div>
           <div className="text-sm text-muted-foreground">
             <span>{result.frequency}</span>
             {result.clientFundName && <span> • {result.clientFundName}</span>}
@@ -64,15 +75,6 @@ export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
             </div>
           )}
         </div>
-        <Badge
-          className={cn(
-            "text-white font-bold px-3 py-1.5 flex items-center gap-2 flex-shrink-0",
-            statusColor
-          )}
-        >
-          <StatusIcon className="h-4 w-4" />
-          {result.status}
-        </Badge>
       </div>
 
       <Card className="border-none shadow-none">
