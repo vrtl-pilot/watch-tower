@@ -87,7 +87,7 @@ const FundEligibility = () => {
 
       const result: FundEligibilityResponse = await response.json();
       setEligibilityResponse(result);
-      
+
       const companyCount = Object.keys(result.companyResults).length;
       showSuccess(`Eligibility check completed for ${selectedFundName} across ${companyCount} company(s).`);
     } catch (error) {

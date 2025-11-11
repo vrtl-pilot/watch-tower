@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Calendar, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -41,10 +41,28 @@ export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
           <div className="text-sm text-muted-foreground">
             <span>{result.frequency}</span>
             {result.clientFundName && <span> • {result.clientFundName}</span>}
-            {result.startDate && <span> • Start: {new Date(result.startDate).toLocaleDateString()}</span>}
-            {result.endDate && <span> • End: {new Date(result.endDate).toLocaleDateString()}</span>}
-            {result.subFundIds && <span> • Sub-funds: {result.subFundIds}</span>}
           </div>
+          {(result.startDate || result.endDate || result.subFundIds) && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {result.startDate && (
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                  <Calendar className="h-3 w-3" />
+                  Start: {new Date(result.startDate).toLocaleDateString()}
+                </Badge>
+              )}
+              {result.endDate && (
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                  <Calendar className="h-3 w-3" />
+                  End: {new Date(result.endDate).toLocaleDateString()}
+                </Badge>
+              )}
+              {result.subFundIds && result.subFundIds.split(',').map((id, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {id.trim()}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         <Badge
           className={cn(
