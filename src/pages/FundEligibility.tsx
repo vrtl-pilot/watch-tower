@@ -30,6 +30,9 @@ interface FundEligibilityResult {
   frequency: string;
   clientFundName: string;
   company: string;
+  startDate?: Date | string | null;
+  endDate?: Date | string | null;
+  subFundIds: string;
 }
 
 interface FundEligibilityResponse {

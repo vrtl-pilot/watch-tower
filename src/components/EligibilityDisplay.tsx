@@ -15,6 +15,9 @@ interface FundEligibilityResult {
   frequency: string;
   clientFundName: string;
   company: string;
+  startDate?: Date | string | null;
+  endDate?: Date | string | null;
+  subFundIds: string;
 }
 
 interface EligibilityDisplayProps {
@@ -38,6 +41,9 @@ export const EligibilityDisplay = ({ result }: EligibilityDisplayProps) => {
           <div className="text-sm text-muted-foreground">
             <span>{result.frequency}</span>
             {result.clientFundName && <span> • {result.clientFundName}</span>}
+            {result.startDate && <span> • Start: {new Date(result.startDate).toLocaleDateString()}</span>}
+            {result.endDate && <span> • End: {new Date(result.endDate).toLocaleDateString()}</span>}
+            {result.subFundIds && <span> • Sub-funds: {result.subFundIds}</span>}
           </div>
         </div>
         <Badge
